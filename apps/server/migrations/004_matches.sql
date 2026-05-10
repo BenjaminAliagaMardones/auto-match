@@ -1,0 +1,7 @@
+-- Placeholder para el módulo de Match + Chat (FR-19).
+-- A completar por el integrante encargado de Match y Comunicación.
+--
+-- Sugerencia de tablas mínimas (no vinculante):
+--   swipes(buyer_id, listing_id, direction, created_at)
+--   matches(id, buyer_id, listing_id, created_at)
+--   messages(id, match_id, sender_id, body, created_at)

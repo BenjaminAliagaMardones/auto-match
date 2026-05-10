@@ -1,0 +1,8 @@
+-- Placeholder para el módulo de Listings (FR-12).
+-- A completar por el integrante encargado de Gestión de Listings.
+--
+-- Sugerencia de columnas mínimas (no vinculante):
+--   id UUID PK, seller_id UUID FK -> users(id),
+--   brand, model, year, price, vehicle_type, description,
+--   status (active/paused/sold), created_at, updated_at.
+-- También probablemente: tabla listing_photos(listing_id, url, position).

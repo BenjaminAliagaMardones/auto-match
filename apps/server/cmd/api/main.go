@@ -1,0 +1,92 @@
+package main
+
+import (
+	"log"
+	"net/http"
+	"time"
+
+	_ "github.com/BenjaminAliagaMardones/automatch/docs"
+	"github.com/BenjaminAliagaMardones/automatch/internal/auth"
+	"github.com/BenjaminAliagaMardones/automatch/internal/handler"
+	"github.com/BenjaminAliagaMardones/automatch/internal/middleware"
+	"github.com/BenjaminAliagaMardones/automatch/internal/repository"
+	"github.com/BenjaminAliagaMardones/automatch/internal/service"
+	"github.com/BenjaminAliagaMardones/automatch/internal/shared/config"
+	"github.com/BenjaminAliagaMardones/automatch/internal/shared/db"
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"golang.org/x/crypto/bcrypt"
+)
+
+// @title           AutoMatch API
+// @version         0.1
+// @description     Backend de AutoMatch — primera entrega (Auth + Perfil).
+// @description     Plataforma de matchmaking para vehículos usados (proyecto UCT).
+// @host            localhost:8080
+// @BasePath        /api/v1
+// @schemes         http
+// @securityDefinitions.apikey BearerAuth
+// @in              header
+// @name            Authorization
+// @description     Pegar el token devuelto por /auth/login con el prefijo "Bearer ". Ejemplo: "Bearer eyJhbGciOi..."
+func main() {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("config: %v", err)
+	}
+
+	conn, err := db.Open(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("db: %v", err)
+	}
+	defer conn.Close()
+
+	// Composition root: aquí (y solo aquí) se construye el grafo de
+	// dependencias. Cada capa recibe sus colaboradores por constructor.
+	hasher := auth.NewBcryptHasher(bcrypt.DefaultCost)
+	jwtIssuer := auth.NewJWTIssuer(cfg.JWTSecret, 24*time.Hour)
+
+	userRepo := repository.NewPostgresUserRepository(conn)
+	profileRepo := repository.NewPostgresProfileRepository(conn)
+
+	authService := service.NewAuthService(userRepo, hasher, jwtIssuer)
+	profileService := service.NewProfileService(profileRepo)
+
+	authHandler := handler.NewAuthHandler(authService)
+	profileHandler := handler.NewProfileHandler(profileService)
+
+	r := gin.Default()
+	r.GET("/api/v1/health", healthCheck)
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	api := r.Group("/api/v1")
+	{
+		api.POST("/auth/register", authHandler.Register)
+		api.POST("/auth/login", authHandler.Login)
+
+		protected := api.Group("/")
+		protected.Use(middleware.JWTAuth(jwtIssuer))
+		{
+			protected.GET("/profile/me", profileHandler.GetMe)
+			protected.PUT("/profile/me", profileHandler.UpdateMe)
+		}
+	}
+
+	log.Printf("automatch api escuchando en :%s", cfg.Port)
+	log.Printf("swagger UI en http://localhost:%s/swagger/index.html", cfg.Port)
+	if err := r.Run(":" + cfg.Port); err != nil {
+		log.Fatalf("server: %v", err)
+	}
+}
+
+// healthCheck godoc
+// @Summary      Healthcheck
+// @Description  Verifica que el server responde.
+// @Tags         system
+// @Produce      json
+// @Success      200  {object}  map[string]string
+// @Router       /health [get]
+func healthCheck(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}

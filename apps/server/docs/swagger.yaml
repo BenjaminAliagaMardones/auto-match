@@ -1,0 +1,219 @@
+basePath: /api/v1
+definitions:
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UserResponse'
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ProfileResponse:
+    properties:
+      budget_max:
+        type: integer
+      budget_min:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      vehicle_type:
+        type: string
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      role:
+        enum:
+        - buyer
+        - seller
+        type: string
+    required:
+    - email
+    - password
+    - role
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UpdateProfileRequest:
+    properties:
+      budget_max:
+        type: integer
+      budget_min:
+        type: integer
+      vehicle_type:
+        type: string
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: |-
+    Backend de AutoMatch — primera entrega (Auth + Perfil).
+    Plataforma de matchmaking para vehículos usados (proyecto UCT).
+  title: AutoMatch API
+  version: "0.1"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica un usuario y devuelve un JWT (válido por 24h).
+      parameters:
+      - description: Credenciales
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "401":
+          description: Credenciales inválidas
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      summary: Login
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: 'Crea una cuenta nueva (rol: buyer o seller).'
+      parameters:
+      - description: Datos de registro
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UserResponse'
+        "400":
+          description: Body inválido o password débil
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "409":
+          description: Email ya registrado
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      summary: Registrar usuario
+      tags:
+      - auth
+  /health:
+    get:
+      description: Verifica que el server responde.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Healthcheck
+      tags:
+      - system
+  /profile/me:
+    get:
+      description: Devuelve el perfil de preferencias del usuario autenticado. Si
+        aún no fue configurado, devuelve un perfil vacío.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mi perfil
+      tags:
+      - profile
+    put:
+      consumes:
+      - application/json
+      description: Configura tipo de vehículo y rango de presupuesto.
+      parameters:
+      - description: Preferencias
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ProfileResponse'
+        "400":
+          description: Presupuesto inválido
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar preferencias del comprador
+      tags:
+      - profile
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: 'Pegar el token devuelto por /auth/login con el prefijo "Bearer ".
+      Ejemplo: "Bearer eyJhbGciOi..."'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
