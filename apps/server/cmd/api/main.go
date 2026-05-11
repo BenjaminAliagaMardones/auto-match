@@ -49,12 +49,22 @@ func main() {
 
 	userRepo := repository.NewPostgresUserRepository(conn)
 	profileRepo := repository.NewPostgresProfileRepository(conn)
+	listingRepo := repository.NewPostgresListingRepository(conn)
+	swipeRepo := repository.NewPostgresSwipeRepository(conn)
+	matchRepo := repository.NewPostgresMatchRepository(conn)
+	messageRepo := repository.NewPostgresMessageRepository(conn)
 
 	authService := service.NewAuthService(userRepo, hasher, jwtIssuer)
 	profileService := service.NewProfileService(profileRepo)
+	listingService := service.NewListingService(listingRepo, userRepo)
+	feedService := service.NewFeedService(userRepo, profileRepo, listingRepo)
+	matchService := service.NewMatchService(userRepo, listingRepo, swipeRepo, matchRepo, messageRepo)
 
 	authHandler := handler.NewAuthHandler(authService)
 	profileHandler := handler.NewProfileHandler(profileService)
+	listingHandler := handler.NewListingHandler(listingService)
+	feedHandler := handler.NewFeedHandler(feedService)
+	matchHandler := handler.NewMatchHandler(matchService)
 
 	r := gin.Default()
 	r.GET("/api/v1/health", healthCheck)
@@ -65,11 +75,27 @@ func main() {
 		api.POST("/auth/register", authHandler.Register)
 		api.POST("/auth/login", authHandler.Login)
 
+		// Endpoints públicos de listings (catálogo y detalle).
+		api.GET("/listings", listingHandler.Search)
+		api.GET("/listings/:id", listingHandler.GetByID)
+
 		protected := api.Group("/")
 		protected.Use(middleware.JWTAuth(jwtIssuer))
 		{
 			protected.GET("/profile/me", profileHandler.GetMe)
 			protected.PUT("/profile/me", profileHandler.UpdateMe)
+
+			protected.POST("/listings", listingHandler.Create)
+			protected.GET("/listings/me", listingHandler.ListMine)
+			protected.PATCH("/listings/:id", listingHandler.Update)
+			protected.DELETE("/listings/:id", listingHandler.Delete)
+
+			protected.GET("/feed", feedHandler.Get)
+			protected.POST("/swipes", matchHandler.Swipe)
+
+			protected.GET("/matches", matchHandler.ListMine)
+			protected.GET("/matches/:id/messages", matchHandler.ListMessages)
+			protected.POST("/matches/:id/messages", matchHandler.SendMessage)
 		}
 	}
 

@@ -107,6 +107,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/feed": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Devuelve listings activos compatibles con las preferencias del comprador, excluyendo los ya swipeados.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "feed"
+                ],
+                "summary": "Feed del comprador",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Cantidad (default 20, máx 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset para paginación",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "No eres buyer",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Verifica que el server responde.",
@@ -125,6 +176,442 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "string"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/listings": {
+            "get": {
+                "description": "Pool público de listings activos con filtros opcionales.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "listings"
+                ],
+                "summary": "Buscar listings activos",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tipo de vehículo",
+                        "name": "vehicle_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Precio mínimo",
+                        "name": "price_min",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Precio máximo",
+                        "name": "price_max",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cantidad (default 20, máx 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset para paginación",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingListResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Crea un nuevo listing. Solo usuarios con rol seller pueden publicar.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "listings"
+                ],
+                "summary": "Publicar un vehículo",
+                "parameters": [
+                    {
+                        "description": "Datos del vehículo",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.CreateListingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "No eres seller",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/listings/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Devuelve todos los listings del usuario autenticado.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "listings"
+                ],
+                "summary": "Mis listings (vendedor)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/listings/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "listings"
+                ],
+                "summary": "Detalle de un listing",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Listing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Solo el dueño puede eliminarlo.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "listings"
+                ],
+                "summary": "Eliminar un listing",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Listing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Solo el dueño del listing puede modificarlo.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "listings"
+                ],
+                "summary": "Editar un listing",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Listing ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Campos a actualizar",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UpdateListingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/matches": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Listado de matches en los que el usuario participa (como buyer o como seller del listing).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "matches"
+                ],
+                "summary": "Mis matches",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MatchListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/matches/{id}/messages": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "matches"
+                ],
+                "summary": "Historial de mensajes de un match",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Match ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "No participas en este match",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "matches"
+                ],
+                "summary": "Enviar mensaje en un match",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Match ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Mensaje",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SendMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
                         }
                     }
                 }
@@ -209,14 +696,171 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/swipes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Si la dirección es 'like' y el listing está activo, se crea automáticamente un Match (FR-19).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "feed"
+                ],
+                "summary": "Registrar swipe (like / pass)",
+                "parameters": [
+                    {
+                        "description": "Swipe",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SwipeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SwipeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.CreateListingRequest": {
+            "type": "object",
+            "required": [
+                "brand",
+                "model",
+                "photo_urls",
+                "price"
+            ],
+            "properties": {
+                "brand": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "photo_urls": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "vehicle_type": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingListResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingResponse"
+                    }
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingResponse": {
+            "type": "object",
+            "properties": {
+                "brand": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "photos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.PhotoResponse"
+                    }
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "seller_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "vehicle_type": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
                 }
             }
         },
@@ -243,6 +887,85 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UserResponse"
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MatchListResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MatchResponse"
+                    }
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MatchResponse": {
+            "type": "object",
+            "properties": {
+                "buyer_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "listing_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageListResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageResponse"
+                    }
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "match_id": {
+                    "type": "string"
+                },
+                "sender_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.PhotoResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "integer"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },
@@ -287,6 +1010,85 @@ const docTemplate = `{
                         "buyer",
                         "seller"
                     ]
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SendMessageRequest": {
+            "type": "object",
+            "required": [
+                "body"
+            ],
+            "properties": {
+                "body": {
+                    "type": "string",
+                    "minLength": 1
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SwipeRequest": {
+            "type": "object",
+            "required": [
+                "direction",
+                "listing_id"
+            ],
+            "properties": {
+                "direction": {
+                    "type": "string",
+                    "enum": [
+                        "like",
+                        "pass"
+                    ]
+                },
+                "listing_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SwipeResponse": {
+            "type": "object",
+            "properties": {
+                "direction": {
+                    "type": "string"
+                },
+                "listing_id": {
+                    "type": "string"
+                },
+                "match": {
+                    "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MatchResponse"
+                },
+                "match_created": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UpdateListingRequest": {
+            "type": "object",
+            "properties": {
+                "brand": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "paused",
+                        "sold"
+                    ]
+                },
+                "vehicle_type": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
                 }
             }
         },

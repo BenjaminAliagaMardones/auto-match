@@ -1,9 +1,72 @@
 basePath: /api/v1
 definitions:
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.CreateListingRequest:
+    properties:
+      brand:
+        type: string
+      description:
+        type: string
+      model:
+        type: string
+      photo_urls:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      price:
+        type: integer
+      vehicle_type:
+        type: string
+      year:
+        type: integer
+    required:
+    - brand
+    - model
+    - photo_urls
+    - price
+    type: object
   github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse:
     properties:
       error:
         type: string
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingListResponse:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingResponse'
+        type: array
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingResponse:
+    properties:
+      brand:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      model:
+        type: string
+      photos:
+        items:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.PhotoResponse'
+        type: array
+      price:
+        type: integer
+      seller_id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      vehicle_type:
+        type: string
+      year:
+        type: integer
     type: object
   github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.LoginRequest:
     properties:
@@ -21,6 +84,57 @@ definitions:
         type: string
       user:
         $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UserResponse'
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MatchListResponse:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MatchResponse'
+        type: array
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MatchResponse:
+    properties:
+      buyer_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      listing_id:
+        type: string
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageListResponse:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageResponse'
+        type: array
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageResponse:
+    properties:
+      body:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      match_id:
+        type: string
+      sender_id:
+        type: string
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.PhotoResponse:
+    properties:
+      id:
+        type: string
+      position:
+        type: integer
+      url:
+        type: string
     type: object
   github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ProfileResponse:
     properties:
@@ -51,6 +165,59 @@ definitions:
     - email
     - password
     - role
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SendMessageRequest:
+    properties:
+      body:
+        minLength: 1
+        type: string
+    required:
+    - body
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SwipeRequest:
+    properties:
+      direction:
+        enum:
+        - like
+        - pass
+        type: string
+      listing_id:
+        type: string
+    required:
+    - direction
+    - listing_id
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SwipeResponse:
+    properties:
+      direction:
+        type: string
+      listing_id:
+        type: string
+      match:
+        $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MatchResponse'
+      match_created:
+        type: boolean
+    type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UpdateListingRequest:
+    properties:
+      brand:
+        type: string
+      description:
+        type: string
+      model:
+        type: string
+      price:
+        type: integer
+      status:
+        enum:
+        - active
+        - paused
+        - sold
+        type: string
+      vehicle_type:
+        type: string
+      year:
+        type: integer
     type: object
   github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UpdateProfileRequest:
     properties:
@@ -141,6 +308,39 @@ paths:
       summary: Registrar usuario
       tags:
       - auth
+  /feed:
+    get:
+      description: Devuelve listings activos compatibles con las preferencias del
+        comprador, excluyendo los ya swipeados.
+      parameters:
+      - description: Cantidad (default 20, máx 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset para paginación
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "403":
+          description: No eres buyer
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Feed del comprador
+      tags:
+      - feed
   /health:
     get:
       description: Verifica que el server responde.
@@ -156,6 +356,285 @@ paths:
       summary: Healthcheck
       tags:
       - system
+  /listings:
+    get:
+      description: Pool público de listings activos con filtros opcionales.
+      parameters:
+      - description: Tipo de vehículo
+        in: query
+        name: vehicle_type
+        type: string
+      - description: Precio mínimo
+        in: query
+        name: price_min
+        type: integer
+      - description: Precio máximo
+        in: query
+        name: price_max
+        type: integer
+      - description: Cantidad (default 20, máx 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset para paginación
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingListResponse'
+      summary: Buscar listings activos
+      tags:
+      - listings
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo listing. Solo usuarios con rol seller pueden publicar.
+      parameters:
+      - description: Datos del vehículo
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.CreateListingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "403":
+          description: No eres seller
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Publicar un vehículo
+      tags:
+      - listings
+  /listings/{id}:
+    delete:
+      description: Solo el dueño puede eliminarlo.
+      parameters:
+      - description: Listing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar un listing
+      tags:
+      - listings
+    get:
+      parameters:
+      - description: Listing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      summary: Detalle de un listing
+      tags:
+      - listings
+    patch:
+      consumes:
+      - application/json
+      description: Solo el dueño del listing puede modificarlo.
+      parameters:
+      - description: Listing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Campos a actualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UpdateListingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Editar un listing
+      tags:
+      - listings
+  /listings/me:
+    get:
+      description: Devuelve todos los listings del usuario autenticado.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ListingListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mis listings (vendedor)
+      tags:
+      - listings
+  /matches:
+    get:
+      description: Listado de matches en los que el usuario participa (como buyer
+        o como seller del listing).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MatchListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mis matches
+      tags:
+      - matches
+  /matches/{id}/messages:
+    get:
+      parameters:
+      - description: Match ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "403":
+          description: No participas en este match
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Historial de mensajes de un match
+      tags:
+      - matches
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Match ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Mensaje
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Enviar mensaje en un match
+      tags:
+      - matches
   /profile/me:
     get:
       description: Devuelve el perfil de preferencias del usuario autenticado. Si
@@ -207,6 +686,47 @@ paths:
       summary: Actualizar preferencias del comprador
       tags:
       - profile
+  /swipes:
+    post:
+      consumes:
+      - application/json
+      description: Si la dirección es 'like' y el listing está activo, se crea automáticamente
+        un Match (FR-19).
+      parameters:
+      - description: Swipe
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SwipeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.SwipeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Registrar swipe (like / pass)
+      tags:
+      - feed
 schemes:
 - http
 securityDefinitions:
