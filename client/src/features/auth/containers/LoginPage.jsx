@@ -1,12 +1,63 @@
+import LoginForm from '../ui/LoginForm';
+import { useAuth } from '../../../hooks/useAuth';
+import { useNavigate, useLocation } from 'react-router-dom';
+
 export default function LoginPage() {
+  const { login, isLoading, error } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Detectar si venimos del registro exitoso
+  const registeredSuccess = location.state?.registered;
+
+  const handleLogin = (data) => {
+    login(data, {
+      onSuccess: (response) => {
+        const role = response.user?.role;
+        if (role === 'seller') {
+          navigate('/seller/dashboard');
+        } else {
+          navigate('/buyer/feed');
+        }
+      },
+      onError: (err) => {
+        console.error("Falló el login:", err);
+      }
+    });
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="p-8 bg-white shadow-lg rounded-lg text-center">
-        <h1 className="text-2xl font-bold text-blue-600">AutoMatch</h1>
-        <p className="mt-2 text-gray-600">¡Entorno de React Puro funcionando!</p>
-        <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
-          Iniciar Sesión
-        </button>
+    <div className="auth-page">
+      {/* Hero izquierdo */}
+      <div className="auth-hero">
+        <div className="auth-hero-content">
+          <div className="auth-hero-logo animate-pulse-slow">🚗 AutoMatch</div>
+          <p className="auth-hero-tagline">
+            Desliza, conecta y encuentra tu auto perfecto.
+          </p>
+        </div>
+      </div>
+
+      {/* Form derecho */}
+      <div className="auth-form-side">
+        <div className="auth-card">
+          <h1 className="auth-card-title">Bienvenido de vuelta</h1>
+          <p className="auth-card-subtitle">Ingresa tus credenciales para continuar</p>
+
+          {registeredSuccess && (
+            <div className="alert-success">
+              ¡Cuenta creada exitosamente! Ahora inicia sesión.
+            </div>
+          )}
+
+          {error && (
+            <div className="alert-error">
+              Error al iniciar sesión. Verifica tus credenciales.
+            </div>
+          )}
+
+          <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+        </div>
       </div>
     </div>
   );
