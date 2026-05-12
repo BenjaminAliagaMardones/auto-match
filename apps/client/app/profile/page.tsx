@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchAPI } from '@/lib/api';
+import Link from 'next/link';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -63,6 +64,17 @@ export default function ProfilePage() {
             <span className="text-sm font-medium text-gray-500">Rol de Usuario</span>
             <span className="text-lg capitalize text-gray-900">{profile.role}</span>
           </div>
+          
+          {profile.role === 'seller' && (
+            <div className="pt-4 border-b border-gray-100 pb-4">
+              <Link 
+                href="/listings"
+                className="inline-block rounded-md bg-green-500 px-4 py-2 text-white font-medium hover:bg-green-600 transition-colors"
+              >
+                Gestionar mis vehículos
+              </Link>
+            </div>
+          )}
 
           {profile.preferences && (
             <div className="mt-6 rounded-lg bg-gray-50 p-4">
@@ -76,10 +88,16 @@ export default function ProfilePage() {
             </div>
           )}
           
-          <div className="pt-6">
+          <div className="pt-6 flex gap-4">
+            <Link 
+              href="/profile/edit"
+              className="flex-1 text-center rounded-md bg-blue-50 px-4 py-2 text-blue-700 font-medium hover:bg-blue-100 transition-colors"
+            >
+              Editar Preferencias
+            </Link>
             <button 
               onClick={handleLogout}
-              className="w-full rounded-md bg-red-500 px-4 py-2 text-white font-medium hover:bg-red-600 transition-colors"
+              className="flex-1 rounded-md bg-red-500 px-4 py-2 text-white font-medium hover:bg-red-600 transition-colors"
             >
               Cerrar Sesión
             </button>
