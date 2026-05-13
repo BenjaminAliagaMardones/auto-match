@@ -1,0 +1,266 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
+import { fetchAPI } from '@/lib/api';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+
+interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  vehicle_type: string;
+  price: number;
+  year?: number;
+  mileage?: number;
+  brand?: string;
+  model?: string;
+  status?: string;
+}
+
+function EditListingContent() {
+  const router = useRouter();
+  const params = useParams();
+  const listingId = params?.id as string;
+
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    vehicle_type: '',
+    price: 0,
+    year: new Date().getFullYear(),
+    mileage: 0,
+  });
+
+  // Cargar datos del listing
+  useEffect(() => {
+    const loadListing = async () => {
+      if (!listingId) return;
+
+      try {
+        setIsLoading(true);
+        const data = await fetchAPI(`/listings/${listingId}`);
+        setListing(data);
+        setFormData({
+          title: data.title || '',
+          description: data.description || '',
+          vehicle_type: data.vehicle_type || '',
+          price: data.price || 0,
+          year: data.year || new Date().getFullYear(),
+          mileage: data.mileage || 0,
+        });
+      } catch (err: any) {
+        setError(err.message || 'Error al cargar el vehículo');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadListing();
+  }, [listingId]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'price' || name === 'year' || name === 'mileage' ? Number(value) : value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      setIsSaving(true);
+
+      await fetchAPI(`/listings/${listingId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          vehicle_type: formData.vehicle_type,
+          price: formData.price,
+          year: formData.year,
+          mileage: formData.mileage,
+        }),
+      });
+
+      alert('Vehículo actualizado correctamente');
+      router.push('/listings');
+    } catch (err: any) {
+      setError(err.message || 'Error al guardar cambios');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 text-lg">Cargando información...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-8">
+          <Link href="/listings" className="text-blue-600 hover:text-blue-700 font-medium">
+            ← Volver a Mis Publicaciones
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900 mt-4">Editar Vehículo</h1>
+        </div>
+
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Título */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Título del Anuncio *
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ej: Toyota Corolla 2020"
+              />
+            </div>
+
+            {/* Descripción */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descripción *
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                required
+                rows={5}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Describe el estado, características especiales, etc."
+              />
+            </div>
+
+            {/* Tipo de vehículo */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de Vehículo *
+              </label>
+              <select
+                name="vehicle_type"
+                value={formData.vehicle_type}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="">Selecciona un tipo</option>
+                <option value="sedan">Sedán</option>
+                <option value="suv">SUV</option>
+                <option value="hatchback">Hatchback</option>
+                <option value="pickup">Pickup</option>
+                <option value="van">Van</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+
+            {/* Precio */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Precio (CLP) *
+              </label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                required
+                min="0"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ej: 15000000"
+              />
+            </div>
+
+            {/* Año y Kilometraje */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Año
+                </label>
+                <input
+                  type="number"
+                  name="year"
+                  value={formData.year}
+                  onChange={handleChange}
+                  min="1990"
+                  max={new Date().getFullYear() + 1}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Kilometraje
+                </label>
+                <input
+                  type="number"
+                  name="mileage"
+                  value={formData.mileage}
+                  onChange={handleChange}
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Ej: 50000"
+                />
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div className="flex gap-4 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => router.push('/listings')}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+              >
+                {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function EditListingPage() {
+  return (
+    <ProtectedRoute requiredRole="seller">
+      <EditListingContent />
+    </ProtectedRoute>
+  );
+}

@@ -4,23 +4,25 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchAPI } from '@/lib/api';
 import Link from 'next/link';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+import { clearAuthData } from '@/lib/auth';
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const [profile, setProfile] = useState<any>(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { logout } = useAuth();
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        // Al llamar a fetchAPI, esta inyectará automáticamente el token guardado
         const data = await fetchAPI('/profile/me');
         setProfile(data);
       } catch (err: any) {
-        // Si falla (token inválido o expirado), lo mandamos al login
         setError('Sesión expirada o no autorizada');
-        localStorage.removeItem('token');
+        clearAuthData();
         router.push('/login');
       } finally {
         setIsLoading(false);
@@ -31,20 +33,20 @@ export default function ProfilePage() {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/login');
+    logout();
+    router.push('/');
   };
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex items-center justify-center bg-gray-50 p-8">
         <p className="text-xl text-gray-600">Cargando perfil...</p>
       </div>
     );
   }
 
   if (error || !profile) {
-    return null; // El useEffect ya se encarga de redirigir
+    return null;
   }
 
   return (
@@ -76,15 +78,17 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {profile.preferences && (
+          {profile.vehicle_type && (
             <div className="mt-6 rounded-lg bg-gray-50 p-4">
               <h3 className="mb-3 font-semibold text-gray-700">Preferencias de Búsqueda</h3>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Tipo de vehículo:</span> {profile.preferences.vehicle_type || 'No definido'}
+                <span className="font-medium">Tipo de vehículo:</span> {profile.vehicle_type || 'No definido'}
               </p>
-              <p className="text-sm text-gray-600 mt-1">
-                <span className="font-medium">Rango de presupuesto:</span> ${profile.preferences.budget_min} - ${profile.preferences.budget_max}
-              </p>
+              {profile.budget_min && profile.budget_max && (
+                <p className="text-sm text-gray-600 mt-1">
+                  <span className="font-medium">Rango de presupuesto:</span> ${profile.budget_min} - ${profile.budget_max}
+                </p>
+              )}
             </div>
           )}
           
@@ -105,5 +109,13 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfilePageContent />
+    </ProtectedRoute>
   );
 }
