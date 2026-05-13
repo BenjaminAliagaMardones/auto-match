@@ -14,70 +14,63 @@ export function PhotoUpload({
   maxPhotos = 5,
 }: PhotoUploadProps) {
   const [photos, setPhotos] = useState<string[]>(existingPhotos);
-  const [previewUrls, setPreviewUrls] = useState<string[]>(existingPhotos);
   const [manualUrl, setManualUrl] = useState('');
+
+  const updatePhotos = (next: string[]) => {
+    setPhotos(next);
+    onPhotosChange(next);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.currentTarget.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      if (photos.length >= maxPhotos) {
-        alert(`Máximo ${maxPhotos} fotos permitidas`);
-        return;
-      }
+    const available = maxPhotos - photos.length;
+    if (available <= 0) {
+      return;
+    }
 
-      // Crear una URL temporal para preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        const newPhotos = [...photos, dataUrl];
-        const newPreviews = [...previewUrls, dataUrl];
+    const toProcess = Array.from(files).slice(0, available);
 
-        setPhotos(newPhotos);
-        setPreviewUrls(newPreviews);
-        onPhotosChange(newPhotos);
-      };
-      reader.readAsDataURL(file);
+    const readAll = toProcess.map(
+      (file) =>
+        new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        })
+    );
+
+    Promise.all(readAll).then((dataUrls) => {
+      const next = [...photos, ...dataUrls].slice(0, maxPhotos);
+      updatePhotos(next);
     });
+
+    e.currentTarget.value = '';
   };
 
   const handleAddManualUrl = () => {
     if (!manualUrl.trim()) return;
-
-    if (photos.length >= maxPhotos) {
-      alert(`Máximo ${maxPhotos} fotos permitidas`);
-      return;
-    }
+    if (photos.length >= maxPhotos) return;
 
     try {
-      new URL(manualUrl); // Validar que sea una URL válida
-
-      const newPhotos = [...photos, manualUrl];
-      setPhotos(newPhotos);
-      setPreviewUrls(newPhotos);
-      onPhotosChange(newPhotos);
+      new URL(manualUrl);
+      updatePhotos([...photos, manualUrl]);
       setManualUrl('');
     } catch {
-      alert('URL inválida');
+      // URL inválida — no la agregamos
     }
   };
 
   const removePhoto = (index: number) => {
-    const newPhotos = photos.filter((_, i) => i !== index);
-    const newPreviews = previewUrls.filter((_, i) => i !== index);
-
-    setPhotos(newPhotos);
-    setPreviewUrls(newPreviews);
-    onPhotosChange(newPhotos);
+    updatePhotos(photos.filter((_, i) => i !== index));
   };
 
   return (
     <div className="space-y-4">
-      {/* Galería de fotos actuales */}
-      {previewUrls.length > 0 && (
+      {photos.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {previewUrls.map((url, index) => (
+          {photos.map((url, index) => (
             <div key={index} className="relative">
               <div className="w-full h-32 bg-gray-200 rounded-lg overflow-hidden">
                 <img
@@ -89,7 +82,7 @@ export function PhotoUpload({
               <button
                 type="button"
                 onClick={() => removePhoto(index)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 text-xs"
               >
                 ✕
               </button>
@@ -100,7 +93,6 @@ export function PhotoUpload({
 
       {photos.length < maxPhotos && (
         <div className="space-y-4">
-          {/* Subida por archivo */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Subir Imágenes ({photos.length}/{maxPhotos})
@@ -124,7 +116,6 @@ export function PhotoUpload({
             </p>
           </div>
 
-          {/* O agregar por URL */}
           <div className="border-t pt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               O agrega una URL de imagen
@@ -134,13 +125,15 @@ export function PhotoUpload({
                 type="url"
                 value={manualUrl}
                 onChange={(e) => setManualUrl(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddManualUrl())}
                 placeholder="https://ejemplo.com/foto.jpg"
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="button"
                 onClick={handleAddManualUrl}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={!manualUrl.trim() || photos.length >= maxPhotos}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
               >
                 Agregar
               </button>

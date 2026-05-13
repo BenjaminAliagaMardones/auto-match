@@ -15,7 +15,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);

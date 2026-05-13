@@ -42,13 +42,19 @@ export function clearAuthData() {
   localStorage.removeItem('user');
 }
 
-// Decodificar JWT básicamente (sin verificar firma)
-export function decodeToken(token: string): any {
+interface JWTPayload {
+  sub?: string;
+  exp?: number;
+  iat?: number;
+  [key: string]: unknown;
+}
+
+// Decodifica el payload del JWT sin verificar firma (solo para lectura de expiración en cliente)
+export function decodeToken(token: string): JWTPayload | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1]));
-    return payload;
+    return JSON.parse(atob(parts[1])) as JWTPayload;
   } catch {
     return null;
   }
