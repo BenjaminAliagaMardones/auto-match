@@ -1,0 +1,872 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[top=2.5cm,bottom=2.5cm,left=3cm,right=3cm]{geometry}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes.geometric,arrows.meta,calc}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+
+% ---- Colores ----
+\definecolor{clssblue}{RGB}{207,226,255}
+\definecolor{ifcyellow}{RGB}{255,250,200}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+\definecolor{codekw}{rgb}{0.13,0.13,0.68}
+
+% ---- Estilos TikZ ----
+\tikzset{
+  mybox/.style={
+    rectangle,
+    draw=black!60,
+    minimum width=2.8cm,
+    minimum height=0.85cm,
+    align=center,
+    font=\small\sffamily,
+    rounded corners=3pt,
+  },
+  classbox/.style={mybox, fill=clssblue},
+  ifcbox/.style={mybox, fill=ifcyellow},
+  uses/.style={->, >=Stealth, thick},
+  impl/.style={->, >=Stealth, dashed, thick},
+  flow/.style={->, >=Stealth, thick},
+}
+
+% ---- Estilo código ----
+\lstdefinestyle{gostyle}{
+  backgroundcolor=\color{backcolour},
+  commentstyle=\color{codegreen}\itshape,
+  keywordstyle=\color{codekw}\bfseries,
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{black!25},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=6pt,
+  tabsize=2,
+  language=Go,
+  morekeywords={string,error,bool,int,uuid,context},
+}
+
+% ---- Secciones ----
+\titleformat{\section}{\large\bfseries\sffamily}{\thesection.}{0.5em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\sffamily}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\small\bfseries\sffamily}{\thesubsubsection.}{0.4em}{}
+
+% ---- Encabezado/pie ----
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily AutoMatch}
+\fancyhead[R]{\small\sffamily Diseño de Software --- UCT}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlist[itemize]{noitemsep,topsep=3pt,leftmargin=*}
+\setlist[enumerate]{noitemsep,topsep=3pt,leftmargin=*}
+
+\begin{document}
+
+% ===== PORTADA =====
+\begin{titlepage}
+  \thispagestyle{empty}
+  \centering
+  \vspace*{2.5cm}
+  {\Huge\bfseries\sffamily AutoMatch\par}
+  \vspace{0.5cm}
+  {\large\sffamily Plataforma de Matchmaking para Vehículos Usados\par}
+  \vspace{1.2cm}
+  \rule{\textwidth}{0.4pt}
+  \vspace{0.4cm}
+  {\normalsize\sffamily Informe de Proyecto --- Diseño de Software\par}
+  {\normalsize\sffamily Universidad Católica de Temuco\par}
+  \vspace{0.4cm}
+  \rule{\textwidth}{0.4pt}
+  \vspace{2cm}
+  \begin{tabular}{ll}
+    \toprule
+    \multicolumn{2}{c}{\textbf{\sffamily Integrantes}} \\
+    \midrule
+    Lizardo Salazar            & \texttt{lsalazar2021@alu.uct.cl}  \\
+    Juan Carrera               & \texttt{juan-xp} (GitHub)          \\
+    Benjamín Aliaga Mardones   & \texttt{baliaga2025@alu.uct.cl}    \\
+    Benjamín De La Fuente      & \texttt{bdelafuenteh@gmail.com}    \\
+    \bottomrule
+  \end{tabular}
+  \vfill
+  {\normalsize\sffamily 2025\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ===== 1. NOMBRE E INTEGRANTES =====
+\section{Nombre e integrantes}
+
+\textbf{Proyecto:} AutoMatch \quad
+\textbf{Asignatura:} Diseño de Software \quad
+\textbf{Universidad:} Universidad Católica de Temuco
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Nombre} & \textbf{Usuario Git} & \textbf{Correo} \\
+  \midrule
+  Lizardo Salazar            & LizardoFSA             & lsalazar2021@alu.uct.cl \\
+  Juan Carrera               & juan-xp                & ---                     \\
+  Benjamín Aliaga Mardones   & BenjaminAliagaMardones & baliaga2025@alu.uct.cl  \\
+  Benjamín De La Fuente      & BenDLF                 & bdelafuenteh@gmail.com  \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ===== 2. PROBLEMA =====
+\section{Problema}
+
+En el mercado de vehículos usados, tanto compradores como vendedores enfrentan una fricci\'{o}n
+importante al intentar conectarse. Los compradores deben revisar manualmente un gran volumen de
+publicaciones que no se ajustan a su presupuesto ni al tipo de vehículo que buscan, invirtiendo
+tiempo en opciones irrelevantes. Por su parte, los vendedores publican sus vehículos en
+plataformas genéricas donde es difícil distinguir a un comprador genuinamente interesado de uno
+que solo navega sin intención real de compra.
+
+\textbf{AutoMatch} propone resolver este problema mediante una plataforma de \emph{matchmaking}
+especializada en vehículos. La solución se sustenta en dos pilares:
+
+\begin{enumerate}
+  \item \textbf{Personalización del feed}: antes de navegar, el comprador configura su perfil con
+        el tipo de vehículo que le interesa (sedán, SUV, hatchback, pickup, van u otro) y un rango
+        de presupuesto (mínimo y máximo en CLP). El sistema usa estas preferencias para construir
+        un feed filtrado, de forma que el comprador solo ve vehículos que se ajustan a sus
+        criterios.
+  \item \textbf{Mecanismo de swipe y match automático}: el comprador evalúa cada vehículo del
+        feed con un \emph{like} o un \emph{pass}. Cuando hace \emph{like} en un listing activo, el
+        sistema crea automáticamente un \emph{match} entre el comprador y el vendedor de ese
+        vehículo, y habilita un canal de chat privado entre ellos. Así, la comunicación ocurre
+        solo cuando existe interés real de ambas partes, eliminando el ruido para el vendedor y
+        agilizando la búsqueda para el comprador.
+\end{enumerate}
+
+La plataforma maneja dos roles claramente diferenciados: el rol \textbf{comprador} (\texttt{buyer})
+accede al feed y realiza swipes, mientras que el rol \textbf{vendedor} (\texttt{seller}) gestiona
+sus publicaciones de vehículos. Cada usuario elige su rol al momento de registrarse.
+
+% ===== 3. AVANCE DEL PROYECTO =====
+\section{Avance del proyecto}
+
+El proyecto implementa una aplicación web completa organizada en dos aplicaciones dentro de un
+monorepo: \texttt{apps/server} (backend en Go) y \texttt{apps/client} (frontend en Next.js).
+Ambas se orquestan junto a la base de datos mediante Docker Compose.
+
+\subsection{Backend --- \texttt{apps/server}}
+
+El backend sigue una \textbf{Clean Architecture} dividida en cuatro capas bien separadas:
+
+\begin{itemize}
+  \item \textbf{Dominio} (\texttt{internal/domain}): entidades y lógica de negocio pura, sin
+        dependencias de infraestructura. Contiene las entidades \texttt{User}, \texttt{Listing},
+        \texttt{Photo}, \texttt{Match}, \texttt{Message}, \texttt{BuyerProfile} y \texttt{Swipe},
+        junto con sus constructores validadores y los tipos enumerados
+        (\texttt{ListingStatus}, \texttt{Role}, \texttt{SwipeDirection}).
+  \item \textbf{Repositorios} (\texttt{internal/repository}): interfaces de acceso a datos e
+        implementaciones PostgreSQL. Cada agregado de dominio tiene su propia interfaz
+        (\texttt{UserRepository}, \texttt{ListingRepository}, \texttt{MatchRepository},
+        \texttt{MessageRepository}, \texttt{ProfileRepository}, \texttt{SwipeRepository}).
+  \item \textbf{Servicios} (\texttt{internal/service}): lógica de aplicación que orquesta el
+        dominio y los repositorios. Incluye \texttt{AuthService}, \texttt{ListingService},
+        \texttt{FeedService}, \texttt{MatchService} y \texttt{ProfileService}.
+  \item \textbf{Handlers} (\texttt{internal/handler}): adaptadores HTTP (Gin) que traducen
+        peticiones/respuestas y delegan al servicio correspondiente. Incluye
+        \texttt{AuthHandler}, \texttt{ListingHandler}, \texttt{FeedHandler},
+        \texttt{MatchHandler} y \texttt{ProfileHandler}.
+\end{itemize}
+
+Las funcionalidades implementadas son:
+\begin{itemize}
+  \item \textbf{Autenticación}: registro con validación de email y contraseña (mínimo 6
+        caracteres), login con emisión de JWT (HS256, 24 horas de expiración).
+  \item \textbf{Gestión de perfiles}: un comprador puede configurar y actualizar su tipo de
+        vehículo preferido y rango de presupuesto. Si el perfil no existe, se devuelve uno vacío
+        (sin error).
+  \item \textbf{Listings (CRUD)}: los vendedores pueden crear publicaciones con marca, modelo,
+        año, precio, tipo de vehículo, descripción y hasta 5 fotos; editar campos parcialmente
+        (PATCH); y eliminar sus publicaciones. Las fotos se almacenan como URLs en la tabla
+        \texttt{listing\_photos}, cargadas en lote para evitar el problema N+1.
+  \item \textbf{Feed}: construido dinámicamente por \texttt{FeedService}, que filtra listings
+        activos, excluye los ya swipeados por el comprador, excluye los publicados por él mismo y
+        aplica las preferencias de su perfil.
+  \item \textbf{Swipe y match}: al registrar un swipe de tipo \emph{like}, \texttt{MatchService}
+        crea automáticamente un \texttt{Match} en la base de datos. Los swipes de tipo
+        \emph{pass} solo se registran sin generar match.
+  \item \textbf{Chat}: los participantes de un match (comprador y vendedor del listing asociado)
+        pueden enviar y listar mensajes. La autoriz\'{a}ción se verifica a nivel de servicio.
+  \item \textbf{CORS}: configurado para aceptar peticiones desde \texttt{localhost:3000} y
+        \texttt{localhost:3001} con los métodos GET, POST, PUT, PATCH, DELETE y OPTIONS.
+  \item \textbf{Swagger}: documentación interactiva generada con \texttt{swaggo/gin-swagger},
+        disponible en \texttt{/swagger/index.html}.
+\end{itemize}
+
+\subsection{Frontend --- \texttt{apps/client}}
+
+El cliente es una aplicación Next.js 16 con React 19, TypeScript y Tailwind CSS. La autenticación
+se persiste en \texttt{localStorage} y se distribuye en la aplicación mediante un contexto React
+(\texttt{AuthContext}), que expone el usuario actual y la función de logout.
+
+Las páginas implementadas son:
+\begin{itemize}
+  \item \textbf{/login}: formulario de login. Al autenticarse exitosamente, redirige a
+        \texttt{/feed} (compradores) o a \texttt{/listings} (vendedores) según el rol devuelto
+        por la API.
+  \item \textbf{/register}: formulario de registro con selector de rol. Redirige al login tras
+        el registro exitoso.
+  \item \textbf{/feed}: feed de vehículos con swipe. Muestra una tarjeta a la vez con las fotos
+        del vehículo y sus datos. El botón \emph{Like} llama a \texttt{POST /swipes} y muestra
+        una notificación de match si la API indica que se creó uno nuevo. El botón \emph{Pass}
+        también registra el swipe y avanza al siguiente vehículo.
+  \item \textbf{/matches}: lista los matches del usuario. Cada tarjeta muestra el ID del match
+        y la fecha de creación, con un enlace al chat correspondiente.
+  \item \textbf{/chat/[id]}: chat de un match. Muestra la lista de mensajes y un formulario para
+        enviar nuevos. Los mensajes se actualizan cada 3 segundos mediante polling HTTP. Se usa
+        \texttt{useRef} para rastrear el conteo de mensajes sin agregar dependencias reactivas
+        al intervalo, evitando reinicios innecesarios del timer.
+  \item \textbf{/listings}: lista de mis publicaciones (solo vendedores). Permite navegar a la
+        página de creación o de edición, y eliminar listings con confirmación.
+  \item \textbf{/listings/new}: formulario de nueva publicación con subida de fotos
+        (\texttt{PhotoUpload}), campos de marca, modelo, año, precio, tipo y descripción.
+  \item \textbf{/listings/[id]/edit}: formulario de edición de un listing existente. Carga los
+        datos actuales desde la API y permite modificarlos.
+  \item \textbf{/profile}: vista del perfil del usuario autenticado con sus preferencias.
+  \item \textbf{/profile/edit}: formulario para actualizar las preferencias de búsqueda del
+        comprador (tipo de vehículo y rango de presupuesto).
+\end{itemize}
+
+El componente \texttt{PhotoUpload} permite seleccionar múltiples fotos, convertirlas a base64
+mediante \texttt{FileReader} y previsualizarlas antes de publicar. Utiliza \texttt{Promise.all}
+para procesar todos los archivos de forma concurrente y actualizar el estado en un único paso,
+evitando el bug de closure que ocurre al leer archivos en un bucle con actualizaciones de estado
+independientes.
+
+\subsection{Infraestructura}
+
+\begin{itemize}
+  \item \textbf{PostgreSQL 16}: tablas \texttt{users}, \texttt{buyer\_profiles},
+        \texttt{listings}, \texttt{listing\_photos}, \texttt{swipes}, \texttt{matches} y
+        \texttt{messages}, con migraciones SQL versionadas en \texttt{apps/server/migrations/}.
+  \item \textbf{Docker Compose}: orquesta los servicios \texttt{api} (Go, puerto 8080) y
+        \texttt{db} (PostgreSQL, puerto 5432). El servicio \texttt{api} se construye desde el
+        \texttt{Dockerfile} del servidor y depende de que \texttt{db} esté saludable.
+\end{itemize}
+
+% ===== 4. REQUERIMIENTOS Y REGLAS DE NEGOCIO =====
+\section{Requerimientos y reglas de negocio}
+
+\subsection{Requerimientos funcionales implementados}
+
+\begin{center}
+\begin{tabular}{cp{10.5cm}}
+  \toprule
+  \textbf{ID} & \textbf{Descripción} \\
+  \midrule
+  FR-01 & Registro de usuarios con selección de rol (comprador o vendedor). El email se
+          normaliza a minúsculas y se valida su formato; la contraseña se hashea con bcrypt. \\[3pt]
+  FR-02 & Autenticación mediante email y contraseña. Retorna un JWT (HS256) con \texttt{user\_id}
+          y \texttt{role} en los claims, con 24 horas de expiración. \\[3pt]
+  FR-03 & Feed personalizado para compradores. Los listings se filtran por estado
+          \texttt{active}, por las preferencias del perfil del comprador (tipo y presupuesto) y
+          excluyendo los ya swipeados y los publicados por el propio comprador. \\[3pt]
+  FR-04 & Mecanismo de swipe (\emph{like}/\emph{pass}). Solo compradores pueden swipear listings
+          activos que no sean propios. Cada swipe se persiste en la tabla
+          \texttt{swipes}. \\[3pt]
+  FR-12 & Gestión completa de listings por vendedores: crear (con fotos), editar campos
+          parcialmente (PATCH), cambiar estado (\texttt{active}/\texttt{paused}/\texttt{sold})
+          y eliminar. Solo el vendedor dueño puede modificar o eliminar su propio listing. \\[3pt]
+  FR-19 & Creación automática de match al registrar un swipe de tipo \emph{like} sobre un
+          listing activo. El match queda asociado al comprador y al listing. \\[3pt]
+  FR-20 & Chat privado dentro de un match. Solo los participantes (comprador y vendedor del
+          listing) pueden enviar y leer mensajes. \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Reglas de negocio}
+
+Las siguientes reglas están implementadas y se verifican en la capa de dominio o de servicio,
+nunca solo en el cliente:
+
+\begin{enumerate}
+  \item Solo los usuarios con rol \textbf{vendedor} (\texttt{seller}) pueden crear, editar y
+        eliminar listings. \textit{Verificado en \texttt{ListingService.Create()} al consultar el
+        rol del usuario antes de llamar a \texttt{NewListing()}.}
+
+  \item Solo los usuarios con rol \textbf{comprador} (\texttt{buyer}) pueden consumir el feed y
+        realizar swipes. \textit{Verificado en \texttt{FeedService.Build()} y en
+        \texttt{MatchService.Swipe()} al comprobar \texttt{u.Role != domain.RoleBuyer}.}
+
+  \item Un comprador no puede hacer swipe sobre un listing cuyo \texttt{seller\_id} coincida con
+        su propio ID. \textit{Verificado en \texttt{MatchService.Swipe()} con la condición
+        \texttt{listing.SellerID == buyerID}.}
+
+  \item El match se crea automáticamente solo si el swipe es de tipo \emph{like} y el listing
+        tiene estado \texttt{active}. Un listing en estado \texttt{paused} o \texttt{sold} no
+        puede recibir swipes.
+
+  \item Solo los participantes de un match pueden leer y enviar mensajes. \texttt{MatchService}
+        verifica que el \texttt{userID} sea el \texttt{buyer\_id} del match o el
+        \texttt{seller\_id} del listing asociado antes de permitir cualquier operación de chat.
+
+  \item Un listing requiere al menos una foto para poder ser creado. \textit{Validado en
+        \texttt{domain.NewListing()} con la condición \texttt{len(photoURLs) == 0}.}
+
+  \item La contraseña debe tener un mínimo de 6 caracteres. \textit{Validado en
+        \texttt{AuthService.Register()} antes de llamar al hasher.}
+
+  \item El precio de un listing debe ser mayor a cero (\texttt{price > 0}). \textit{Validado en
+        \texttt{domain.NewListing()} y en \texttt{domain.Listing.ApplyUpdates()}.}
+
+  \item El año del vehículo, si se especifica, debe estar en el rango 1900--2100. \textit{Validado
+        en \texttt{domain.NewListing()} y en \texttt{domain.Listing.ApplyUpdates()}.}
+
+  \item La marca y el modelo son campos obligatorios y no pueden quedar vacíos tras aplicar
+        \texttt{strings.TrimSpace()}. \textit{Validado en \texttt{domain.NewListing()} y en
+        \texttt{domain.Listing.ApplyUpdates()}.}
+\end{enumerate}
+
+% ===== 5. PRINCIPIOS SOLID =====
+\clearpage
+\section{Principios SOLID}
+
+\subsection{SRP --- Responsabilidad Única (\textit{Single Responsibility Principle})}
+
+Cada componente tiene una única razón para cambiar. La separación en capas Handler / Service /
+Repository es la materialización más directa de este principio, pero también se aplica dentro
+de cada capa:
+
+\begin{itemize}
+  \item \textbf{AuthHandler}: su única responsabilidad es recibir peticiones HTTP de
+        autenticación, validar el formato de los datos de entrada (\texttt{RegisterRequest},
+        \texttt{LoginRequest}) y devolver las respuestas HTTP correctas. No contiene ninguna
+        regla de negocio.
+  \item \textbf{AuthService}: orquesta el proceso de registro (hashear contraseña, crear entidad
+        User, persistir) y de login (buscar usuario, verificar contraseña, emitir JWT). No
+        conoce ni HTTP ni SQL.
+  \item \textbf{BcryptHasher}: única responsabilidad: aplicar el algoritmo bcrypt para hashear y
+        verificar contraseñas. No sabe de usuarios ni de tokens.
+  \item \textbf{JWTIssuer}: única responsabilidad: emitir tokens JWT con los claims
+        \texttt{user\_id} y \texttt{role}, y validarlos al recibir peticiones.
+  \item \textbf{FeedService}: única responsabilidad: construir el feed de un comprador concreto
+        a partir de sus preferencias de perfil. Tiene un solo método público \texttt{Build()}.
+  \item \textbf{postgresListingRepository}: única responsabilidad: ejecutar consultas SQL sobre
+        las tablas \texttt{listings} y \texttt{listing\_photos}. Implementa la carga por lote
+        de fotos para evitar el problema N+1, pero no contiene lógica de negocio.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.3cm, >=Stealth]
+  \node[mybox, fill=green!15, minimum width=2.6cm] (h)
+    {Handler\\\footnotesize HTTP / serialización};
+  \node[mybox, fill=clssblue, minimum width=2.6cm, right=of h] (s)
+    {Service\\\footnotesize Lógica de negocio};
+  \node[mybox, fill=orange!20, minimum width=2.8cm, right=of s] (r)
+    {Repository\\\footnotesize Persistencia SQL};
+  \node[mybox, fill=gray!20, minimum width=2.2cm, right=of r] (db)
+    {PostgreSQL\\\footnotesize Datos};
+  \draw[flow] (h) -- (s);
+  \draw[flow] (s) -- (r);
+  \draw[flow] (r) -- (db);
+\end{tikzpicture}
+\end{center}
+
+\subsection{OCP --- Abierto/Cerrado (\textit{Open/Closed Principle})}
+
+El struct \texttt{ListingFilter} en \texttt{domain/listing.go} permite extender los criterios de
+búsqueda sin modificar la firma de \texttt{ListingRepository.Search()} ni la lógica de
+\texttt{FeedService}. Cualquier nuevo filtro (año mínimo, marca específica, radio geográfico)
+se agrega como un nuevo campo puntero en el struct; si el campo es \texttt{nil}, el repositorio
+simplemente no aplica esa condición. La función \texttt{Search()} nunca necesita cambiar su
+signatura.
+
+\begin{lstlisting}[style=gostyle]
+// domain/listing.go
+type ListingFilter struct {
+    Status          *ListingStatus
+    VehicleType     *string
+    PriceMin        *int
+    PriceMax        *int
+    ExcludeSwipedBy *uuid.UUID  // excluye listings ya swipeados por el buyer
+    ExcludeSellerID *uuid.UUID  // excluye listings del propio comprador
+    Limit           int
+    Offset          int
+    // Nuevo filtro: agregar YearMin *int no modifica Search()
+}
+\end{lstlisting}
+
+El repositorio construye la cláusula \texttt{WHERE} de forma dinámica inspeccionando qué campos
+son no-\texttt{nil}, por lo que el OCP se mantiene tanto en la interfaz como en la
+implementación.
+
+\subsection{LSP --- Sustitución de Liskov (\textit{Liskov Substitution Principle})}
+
+Toda implementación concreta de repositorio es sustituible por cualquier otra que cumpla la misma
+interfaz sin que los servicios lo detecten. Por ejemplo, \texttt{postgresUserRepository} y un
+hipotético \texttt{inMemoryUserRepository} (usado en tests unitarios) implementan la misma
+interfaz \texttt{UserRepository}:
+
+\begin{lstlisting}[style=gostyle]
+// repository/user_repo.go
+type UserRepository interface {
+    Create(ctx context.Context, u *domain.User) error
+    FindByEmail(ctx context.Context, email string) (*domain.User, error)
+    FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
+}
+\end{lstlisting}
+
+\texttt{AuthService} recibe un \texttt{UserRepository} en su constructor y opera exactamente
+igual independientemente de si la implementación concreta accede a PostgreSQL, a una base
+en memoria o a un mock de test. El contrato de la interfaz (parámetros, valores de retorno,
+semántica de errores como \texttt{ErrNotFound}) es idéntico en todas las implementaciones.
+
+\subsection{ISP --- Segregación de Interfaces (\textit{Interface Segregation Principle})}
+
+En lugar de una única interfaz \texttt{Repository} con todos los métodos del sistema, se definen
+interfaces granulares por agregado. Cada servicio declara solo las dependencias que realmente
+necesita:
+
+\begin{center}
+\begin{tabular}{lp{7.5cm}}
+  \toprule
+  \textbf{Interfaz} & \textbf{Métodos} \\
+  \midrule
+  \texttt{UserRepository}    & \texttt{Create}, \texttt{FindByEmail}, \texttt{FindByID} \\
+  \texttt{ListingRepository} & \texttt{Create}, \texttt{FindByID}, \texttt{Search},
+                               \texttt{ListBySeller}, \texttt{Update}, \texttt{Delete} \\
+  \texttt{MatchRepository}   & \texttt{Create}, \texttt{FindByID}, \texttt{ListForUser} \\
+  \texttt{MessageRepository} & \texttt{Create}, \texttt{ListByMatch} \\
+  \texttt{ProfileRepository} & \texttt{Get}, \texttt{Upsert} \\
+  \texttt{SwipeRepository}   & \texttt{Create} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Como consecuencia directa, \texttt{FeedService} solo recibe tres repositorios en su constructor
+(\texttt{UserRepository}, \texttt{ProfileRepository} y \texttt{ListingRepository}), sin ninguna
+dependencia sobre \texttt{MatchRepository}, \texttt{MessageRepository} ni
+\texttt{SwipeRepository}. Si esas interfaces cambian, \texttt{FeedService} no se ve afectado.
+
+\begin{lstlisting}[style=gostyle]
+// service/feed_service.go
+type FeedService struct {
+    users    repository.UserRepository    // solo necesita FindByID
+    profiles repository.ProfileRepository // solo necesita Get
+    listings repository.ListingRepository // solo necesita Search
+}
+\end{lstlisting}
+
+\subsection{DIP --- Inversión de Dependencias (\textit{Dependency Inversion Principle})}
+
+Los módulos de alto nivel (servicios) no dependen de implementaciones concretas; dependen de
+abstracciones (interfaces). Las implementaciones concretas tampoco dependen de los servicios;
+ambas dependen de las interfaces definidas en el paquete \texttt{repository} y \texttt{auth}.
+
+El \textbf{Composition Root} en \texttt{main.go} es el único lugar donde se instancian las
+implementaciones concretas y se inyectan por constructor, manteniendo el resto del código libre
+de acoplamientos:
+
+\begin{lstlisting}[style=gostyle]
+// cmd/api/main.go  (Composition Root)
+hasher     := auth.NewBcryptHasher(bcrypt.DefaultCost)
+jwtIssuer  := auth.NewJWTIssuer(cfg.JWTSecret, 24*time.Hour)
+userRepo   := repository.NewPostgresUserRepository(conn)
+// ...
+authService := service.NewAuthService(userRepo, hasher, jwtIssuer)
+// AuthService solo conoce las interfaces UserRepository y PasswordHasher
+\end{lstlisting}
+
+\begin{center}
+\begin{tikzpicture}[node distance=1cm and 2.1cm, >=Stealth]
+  \node[classbox] (as) {\texttt{AuthService}};
+
+  \node[ifcbox, right=2.3cm of as, yshift=1cm, minimum width=3.8cm] (ph)
+    {\texttt{PasswordHasher}\\{\scriptsize\textit{interface}}};
+  \node[ifcbox, right=2.3cm of as, yshift=-1cm, minimum width=3.8cm] (ur)
+    {\texttt{UserRepository}\\{\scriptsize\textit{interface}}};
+
+  \node[classbox, right=2cm of ph, minimum width=3.4cm] (bh) {\texttt{BcryptHasher}};
+  \node[classbox, right=2cm of ur, minimum width=3.4cm] (pg) {\texttt{postgresUserRepo}};
+
+  \draw[uses] (as) -- (ph) node[midway,above,font=\scriptsize\sffamily]{usa};
+  \draw[uses] (as) -- (ur);
+  \draw[impl] (bh) -- (ph) node[midway,above,font=\scriptsize\sffamily]{implementa};
+  \draw[impl] (pg) -- (ur) node[midway,above,font=\scriptsize\sffamily]{implementa};
+\end{tikzpicture}
+\end{center}
+
+% ===== 6. PATRONES DE DISEÑO =====
+\clearpage
+\section{Patrones de diseño}
+
+\subsection{Factory Method}
+
+El patrón \emph{Factory Method} se aplica en las funciones constructoras del dominio y de la
+capa de autenticación. Estas funciones actúan como fábricas que centralizan la validación de
+invariantes de negocio: el llamador no puede construir un objeto en estado inválido porque la
+única forma de obtenerlo es a través del constructor, que retorna un error descriptivo si alguna
+invariante se viola.
+
+\subsubsection{Instancias en el código}
+
+\textbf{\texttt{domain.NewListing()}} --- valida que la marca no esté vacía, el modelo no esté
+vacío, el precio sea positivo, el año (si se especifica) esté en el rango 1900--2100 y que se
+incluya al menos una foto. Si todas las validaciones pasan, crea el \texttt{Listing} con estado
+\texttt{active}, asigna un UUID nuevo y establece las marcas de tiempo:
+
+\begin{lstlisting}[style=gostyle]
+// domain/listing.go
+func NewListing(sellerID uuid.UUID, brand, model string, year *int,
+    price int, vehicleType, description string,
+    photoURLs []string) (*Listing, error) {
+    brand = strings.TrimSpace(brand)
+    model = strings.TrimSpace(model)
+    if brand == ""           { return nil, ErrInvalidBrand }
+    if model == ""           { return nil, ErrInvalidModel }
+    if price <= 0            { return nil, ErrInvalidPrice }
+    if year != nil && (*year < 1900 || *year > 2100) {
+        return nil, ErrInvalidYear
+    }
+    if len(photoURLs) == 0   { return nil, ErrPhotosRequired }
+    // ... construye y retorna *Listing en estado "active"
+}
+\end{lstlisting}
+
+\textbf{\texttt{domain.NewUser()}} --- normaliza el email a minúsculas y recorta espacios,
+valida que contenga \texttt{@}, que el rol sea \texttt{buyer} o \texttt{seller} y que el hash de
+contraseña no esté vacío.
+
+\textbf{\texttt{auth.NewBcryptHasher(cost int)}} --- si el \texttt{cost} proporcionado está
+fuera del rango válido de bcrypt (\texttt{MinCost}--\texttt{MaxCost}), lo reemplaza por
+\texttt{bcrypt.DefaultCost}, garantizando un \texttt{BcryptHasher} siempre operable.
+
+\textbf{\texttt{auth.NewJWTIssuer(secret string, ttl time.Duration)}} --- si el TTL es cero o
+negativo, lo reemplaza por 24 horas como valor por defecto seguro.
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.1cm and 2.4cm, >=Stealth]
+  \node[mybox, fill=green!15, minimum width=3.5cm] (f)
+    {\texttt{NewListing(\ldots)}\\\footnotesize Factory Method};
+  \node[classbox, right=2.5cm of f, minimum width=3cm] (ok)
+    {\texttt{*Listing}\\\footnotesize estado \texttt{active}, UUID nuevo};
+  \node[mybox, fill=red!15, below=1.3cm of f, minimum width=3.5cm] (err)
+    {\texttt{error}\\\footnotesize \texttt{ErrInvalidBrand}, \texttt{ErrInvalidPrice}, \ldots};
+  \draw[flow] (f) -- (ok)  node[midway,above,font=\scriptsize\sffamily]{[válido]};
+  \draw[flow] (f) -- (err) node[midway,right,font=\scriptsize\sffamily]{[invariante violada]};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Repository}
+
+El patrón \emph{Repository} desacopla completamente la lógica de negocio del mecanismo de
+persistencia. Los servicios nunca importan \texttt{database/sql} ni conocen el dialecto SQL; solo
+operan con las interfaces de repositorio definidas en el paquete \texttt{repository}.
+
+Cada agregado de dominio tiene su propia interfaz con los métodos estrictamente necesarios para
+ese agregado. La implementación concreta (\texttt{postgres*Repository}) resuelve los detalles
+de SQL, incluyendo optimizaciones como la carga por lote de fotos en \texttt{ListingRepository}
+para evitar el problema N+1 (una consulta por todas las fotos de varios listings en lugar de una
+consulta por cada listing):
+
+\begin{lstlisting}[style=gostyle]
+// repository/listing_repo.go
+type ListingRepository interface {
+    Create(ctx context.Context, l *domain.Listing) error
+    FindByID(ctx context.Context, id uuid.UUID) (*domain.Listing, error)
+    Search(ctx context.Context, f domain.ListingFilter) ([]*domain.Listing, error)
+    ListBySeller(ctx context.Context, sellerID uuid.UUID) ([]*domain.Listing, error)
+    Update(ctx context.Context, l *domain.Listing) error
+    Delete(ctx context.Context, id uuid.UUID) error
+}
+\end{lstlisting}
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.8cm and 2.2cm, >=Stealth]
+  \node[ifcbox, minimum width=5cm, minimum height=1.6cm] (uri) {
+    \texttt{ListingRepository}\\
+    {\footnotesize\textit{interface}}\\
+    {\scriptsize\texttt{Create / FindByID / Search}}\\
+    {\scriptsize\texttt{ListBySeller / Update / Delete}}
+  };
+  \node[classbox, minimum width=5cm, minimum height=1.4cm, below=2cm of uri] (pg) {
+    \texttt{postgresListingRepository}\\
+    {\scriptsize\texttt{db: *sql.DB}}\\
+    {\scriptsize carga fotos en lote (N+1 avoidance)}
+  };
+  \node[classbox, minimum width=3cm, left=2.2cm of uri] (svc)
+    {\texttt{ListingService}\\{\footnotesize y \texttt{FeedService}}};
+
+  \draw[impl]  (pg)  -- (uri) node[midway,right,font=\scriptsize\sffamily]{implementa};
+  \draw[uses]  (svc) -- (uri) node[midway,above,font=\scriptsize\sffamily]{depende de};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Strategy}
+
+El patrón \emph{Strategy} se aplica en el mecanismo de hashing de contraseñas. La interfaz
+\texttt{PasswordHasher} define el contrato con dos métodos: \texttt{Hash()} para hashear una
+contraseña en texto plano y \texttt{Verify()} para compararla contra un hash almacenado.
+
+\texttt{AuthService} recibe un \texttt{PasswordHasher} en su constructor y nunca instancia
+ninguna implementación concreta. Esto significa que el algoritmo de hashing puede cambiarse
+(por ejemplo, de bcrypt a argon2 o scrypt) simplemente implementando la interfaz y pasando la
+nueva implementación al constructor de \texttt{AuthService}, sin modificar una sola línea de
+la lógica de autenticación:
+
+\begin{lstlisting}[style=gostyle]
+// auth/hasher.go
+// PasswordHasher define la estrategia para hashear contraseñas.
+// Patrón Strategy: AuthService depende de esta interface, no de bcrypt.
+type PasswordHasher interface {
+    Hash(plain string) (string, error)
+    Verify(plain, hashed string) error
+}
+
+type BcryptHasher struct { cost int }
+
+func (h *BcryptHasher) Hash(plain string) (string, error) {
+    b, err := bcrypt.GenerateFromPassword([]byte(plain), h.cost)
+    return string(b), err
+}
+
+func (h *BcryptHasher) Verify(plain, hashed string) error {
+    return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain))
+}
+\end{lstlisting}
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.8cm and 2.2cm, >=Stealth]
+  \node[ifcbox, minimum width=5cm, minimum height=1.8cm] (ph) {
+    \texttt{PasswordHasher}\\
+    {\footnotesize\textit{interface (Strategy)}}\\
+    {\scriptsize\texttt{Hash(plain) (string, error)}}\\
+    {\scriptsize\texttt{Verify(plain, hashed) error}}
+  };
+  \node[classbox, minimum width=5cm, minimum height=1.4cm, below=2cm of ph] (bh) {
+    \texttt{BcryptHasher}\\
+    {\scriptsize\textit{estrategia concreta}}\\
+    {\scriptsize\texttt{cost: int} --- algoritmo bcrypt}
+  };
+  \node[classbox, minimum width=3cm, left=2.2cm of ph] (as)
+    {\texttt{AuthService}\\{\footnotesize cliente de la estrategia}};
+
+  \draw[impl] (bh) -- (ph) node[midway,right,font=\scriptsize\sffamily]{implementa};
+  \draw[uses] (as) -- (ph) node[midway,above,font=\scriptsize\sffamily]{usa};
+\end{tikzpicture}
+\end{center}
+
+% ===== 7. APIs =====
+\section{APIs}
+
+El backend expone una API REST bajo el prefijo \texttt{/api/v1} usando el framework Gin 1.12.
+La documentación interactiva completa está disponible en
+\texttt{http://localhost:8080/swagger/index.html}, generada con \texttt{swaggo/gin-swagger}.
+
+\subsection{Autenticación de requests protegidos}
+
+Los endpoints protegidos requieren el header:
+\begin{lstlisting}[style=gostyle, numbers=none]
+Authorization: Bearer <jwt-token>
+\end{lstlisting}
+
+El JWT contiene los claims \texttt{user\_id} (UUID), \texttt{role} (\texttt{buyer} o
+\texttt{seller}), \texttt{iat} (emitido en) y \texttt{exp} (expira en, 24 horas tras la emisión).
+El middleware \texttt{JWTAuth} valida la firma con HS256 y rechaza tokens expirados o
+mal formados con \texttt{401 Unauthorized}.
+
+\subsection{Tabla de endpoints}
+
+\begin{longtable}{lll}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} \\
+  \midrule
+  \endhead
+  \multicolumn{3}{l}{\small\textit{Públicos (sin JWT)}} \\[3pt]
+  GET    & \texttt{/api/v1/health}               & Estado del servidor (\texttt{200 OK}) \\
+  POST   & \texttt{/api/v1/auth/register}        & Registro de nuevo usuario \\
+  POST   & \texttt{/api/v1/auth/login}           & Login; retorna JWT y datos del usuario \\
+  GET    & \texttt{/api/v1/listings}             & Búsqueda pública de listings \\
+  GET    & \texttt{/api/v1/listings/:id}         & Detalle de un listing \\
+  \midrule
+  \multicolumn{3}{l}{\small\textit{Protegidos (requieren JWT)}} \\[3pt]
+  GET    & \texttt{/api/v1/profile/me}           & Obtener perfil del usuario autenticado \\
+  PUT    & \texttt{/api/v1/profile/me}           & Actualizar preferencias del perfil \\
+  POST   & \texttt{/api/v1/listings}             & Crear listing (solo \texttt{seller}) \\
+  GET    & \texttt{/api/v1/listings/me}          & Listar mis listings \\
+  PATCH  & \texttt{/api/v1/listings/:id}         & Editar listing (solo su dueño) \\
+  DELETE & \texttt{/api/v1/listings/:id}         & Eliminar listing (solo su dueño) \\
+  GET    & \texttt{/api/v1/feed}                 & Feed personalizado (solo \texttt{buyer}) \\
+  POST   & \texttt{/api/v1/swipes}               & Registrar swipe like/pass (solo \texttt{buyer}) \\
+  GET    & \texttt{/api/v1/matches}              & Listar mis matches \\
+  GET    & \texttt{/api/v1/matches/:id/messages} & Listar mensajes de un match \\
+  POST   & \texttt{/api/v1/matches/:id/messages} & Enviar mensaje en un match \\
+  \bottomrule
+\end{longtable}
+
+\subsection{Esquemas de request y response}
+
+\subsubsection{Registro e inicio de sesión}
+
+\begin{lstlisting}[style=gostyle, numbers=none]
+// POST /api/v1/auth/register
+{ "email": "usuario@ejemplo.cl", "password": "secreto", "role": "buyer" }
+// Response 201: { "id": "uuid", "email": "...", "role": "buyer" }
+
+// POST /api/v1/auth/login
+{ "email": "usuario@ejemplo.cl", "password": "secreto" }
+// Response 200:
+{ "token": "eyJ...", "user": { "id": "uuid", "email": "...", "role": "buyer" } }
+\end{lstlisting}
+
+\subsubsection{Listings}
+
+Todos los endpoints de listado (\texttt{/listings}, \texttt{/listings/me}, \texttt{/feed})
+retornan la misma estructura paginada con el campo \texttt{items} y el conteo total:
+
+\begin{lstlisting}[style=gostyle, numbers=none]
+// GET /api/v1/listings  |  GET /api/v1/listings/me  |  GET /api/v1/feed
+{
+  "items": [
+    {
+      "id": "uuid", "seller_id": "uuid",
+      "brand": "Toyota", "model": "Corolla",
+      "year": 2020, "price": 12000000,
+      "vehicle_type": "sedan", "description": "...",
+      "status": "active",
+      "photos": [{ "id": "uuid", "url": "...", "position": 0 }],
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
+    }
+  ],
+  "count": 1
+}
+\end{lstlisting}
+
+\texttt{GET /api/v1/feed} acepta los parámetros de consulta \texttt{limit} (máx.\,100,
+por defecto 20) y \texttt{offset} para paginación.
+
+\subsubsection{Perfil y matches}
+
+\begin{lstlisting}[style=gostyle, numbers=none]
+// GET /api/v1/profile/me
+{ "user_id": "uuid", "vehicle_type": "sedan",
+  "budget_min": 5000000, "budget_max": 15000000,
+  "updated_at": "2025-01-01T00:00:00Z" }
+
+// GET /api/v1/matches  (estructura paginada igual a listings)
+{
+  "items": [
+    { "id": "uuid", "buyer_id": "uuid",
+      "listing_id": "uuid", "created_at": "2025-01-01T00:00:00Z" }
+  ],
+  "count": 1
+}
+
+// GET /api/v1/matches/:id/messages
+{
+  "items": [
+    { "id": "uuid", "match_id": "uuid",
+      "sender_id": "uuid", "body": "Hola, ¿sigue disponible?",
+      "created_at": "2025-01-01T00:00:00Z" }
+  ],
+  "count": 1
+}
+\end{lstlisting}
+
+% ===== 8. BACKLOG Y PARTICIPACIÓN =====
+\section{Backlog y participación del equipo}
+
+\subsection{Historial de commits}
+
+\begin{longtable}{lp{7.5cm}l}
+  \toprule
+  \textbf{Commit} & \textbf{Descripción} & \textbf{Autor} \\
+  \midrule
+  \endhead
+  \texttt{7006743}
+    & Inicializar repositorio en rama main; estructura base del monorepo
+    & B. Aliaga \\[3pt]
+  \texttt{0cfdb3c}
+    & Backend primera entrega: dominio (User, BuyerProfile), Auth service y handler,
+      Profile service y handler, repositorios Postgres, migraciones iniciales, Docker
+      Compose, Swagger
+    & B. Aliaga \\[3pt]
+  \texttt{279a2b8}
+    & Backend: módulo completo de listings --- dominio Listing/Photo, ListingRepository
+      con carga por lote, ListingService con validación de rol, handler CRUD (FR-12)
+    & B. Aliaga \\[3pt]
+  \texttt{31801e4}
+    & Backend: feed con filtro por preferencias (FR-03), swipe con match automático
+      (FR-04, FR-19), chat dentro de match (FR-20), MatchService con verificación de
+      participante
+    & B. Aliaga \\[3pt]
+  \texttt{aee1550}
+    & Frontend: inicialización del proyecto cliente con Next.js 16, TypeScript,
+      Tailwind CSS y estructura de carpetas
+    & L. Salazar / J. Carrera \\[3pt]
+  \texttt{ec120d5}
+    & Frontend: página de perfil con links a gestión de vehículos y edición de
+      preferencias; integración con AuthContext
+    & L. Salazar / J. Carrera \\[3pt]
+  \texttt{dc085d5}
+    & Frontend: \texttt{package.json} con dependencias y devDependencies del proyecto
+    & B. De La Fuente \\[3pt]
+  \texttt{86e5fd0}
+    & Frontend: flujo completo de registro de usuario y hooks de autenticación
+      (\texttt{AuthContext}, \texttt{saveAuthData}, \texttt{ProtectedRoute})
+    & B. De La Fuente \\[3pt]
+  \texttt{69b86b4}
+    & Frontend: páginas de feed con swipe, matches, chat con polling, edición de
+      listings y rutas protegidas por rol
+    & L. Salazar / J. Carrera \\[3pt]
+  \texttt{0b97781}
+    & Frontend: mejoras en la creación de listings (PhotoUpload con Promise.all),
+      correcciones de contratos API y manejo de errores sin \texttt{alert()}
+    & L. Salazar / J. Carrera \\
+  \bottomrule
+\end{longtable}
+
+\subsection{Distribución del trabajo}
+
+\begin{center}
+\begin{tabular}{lp{9.5cm}}
+  \toprule
+  \textbf{Integrante} & \textbf{Responsabilidades principales} \\
+  \midrule
+  Benjamín Aliaga Mardones
+    & Diseño y desarrollo completo del backend (Go): arquitectura por capas, entidades de
+      dominio con constructores validadores, interfaces de repositorio e implementaciones
+      PostgreSQL, lógica de servicios (auth, listings, feed, match, chat, perfil),
+      handlers HTTP con Gin, migraciones SQL, Docker Compose, configuración de Swagger
+      y CORS. \\[5pt]
+  Lizardo Salazar \& Juan Carrera
+    & Desarrollo colaborativo del frontend (Next.js): inicialización del proyecto,
+      integración de autenticación JWT con contexto React, implementación de todas las
+      páginas (feed con swipe, matches, chat con polling, listings CRUD, perfil y
+      preferencias), componente PhotoUpload, rutas protegidas por rol y ajuste de los
+      contratos de API con el backend. \\[5pt]
+  Benjamín De La Fuente
+    & Configuración del entorno frontend (\texttt{package.json}), implementación del
+      flujo de registro de usuario y desarrollo de los hooks y componentes de
+      autenticación (\texttt{AuthContext}, \texttt{ProtectedRoute},
+      \texttt{saveAuthData}). \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}
