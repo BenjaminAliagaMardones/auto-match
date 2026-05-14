@@ -13,7 +13,9 @@
 \usepackage{xcolor}
 \usepackage{listings}
 \usepackage{tikz}
-\usetikzlibrary{positioning,shapes.geometric,arrows.meta,calc}
+% Se agregó la librería 'babel' para evitar errores con las flechas en español
+\usetikzlibrary{positioning,shapes.geometric,arrows.meta,calc,babel}
+\usepackage{colortbl}
 \usepackage[hidelinks]{hyperref}
 \usepackage{fancyhdr}
 
@@ -23,6 +25,11 @@
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{backcolour}{rgb}{0.97,0.97,0.97}
 \definecolor{codekw}{rgb}{0.13,0.13,0.68}
+% Trello table colors
+\definecolor{trellohdr}{RGB}{0,82,147}
+\definecolor{trellogrp}{RGB}{38,132,255}
+\definecolor{trelloalt}{RGB}{235,244,255}
+\definecolor{trellofoot}{RGB}{220,220,220}
 
 % ---- Estilos TikZ ----
 \tikzset{
@@ -100,7 +107,7 @@
     Lizardo Salazar            & \texttt{lsalazar2021@alu.uct.cl}  \\
     Juan Carrera               & \texttt{juan-xp} (GitHub)          \\
     Benjamín Aliaga Mardones   & \texttt{baliaga2025@alu.uct.cl}    \\
-    Benjamín De La Fuente      & \texttt{bdelafuenteh@gmail.com}    \\
+    Benjamín De La Fuente      & \texttt{bdelafuente2025@alu.uct.cl}    \\
     \bottomrule
   \end{tabular}
   \vfill
@@ -133,7 +140,7 @@
 % ===== 2. PROBLEMA =====
 \section{Problema}
 
-En el mercado de vehículos usados, tanto compradores como vendedores enfrentan una fricci\'{o}n
+En el mercado de vehículos usados, tanto compradores como vendedores enfrentan una fricción
 importante al intentar conectarse. Los compradores deben revisar manualmente un gran volumen de
 publicaciones que no se ajustan a su presupuesto ni al tipo de vehículo que buscan, invirtiendo
 tiempo en opciones irrelevantes. Por su parte, los vendedores publican sus vehículos en
@@ -162,6 +169,7 @@ accede al feed y realiza swipes, mientras que el rol \textbf{vendedor} (\texttt{
 sus publicaciones de vehículos. Cada usuario elige su rol al momento de registrarse.
 
 % ===== 3. AVANCE DEL PROYECTO =====
+\newpage
 \section{Avance del proyecto}
 
 El proyecto implementa una aplicación web completa organizada en dos aplicaciones dentro de un
@@ -209,7 +217,7 @@ Las funcionalidades implementadas son:
         crea automáticamente un \texttt{Match} en la base de datos. Los swipes de tipo
         \emph{pass} solo se registran sin generar match.
   \item \textbf{Chat}: los participantes de un match (comprador y vendedor del listing asociado)
-        pueden enviar y listar mensajes. La autoriz\'{a}ción se verifica a nivel de servicio.
+        pueden enviar y listar mensajes. La autorización se verifica a nivel de servicio.
   \item \textbf{CORS}: configurado para aceptar peticiones desde \texttt{localhost:3000} y
         \texttt{localhost:3001} con los métodos GET, POST, PUT, PATCH, DELETE y OPTIONS.
   \item \textbf{Swagger}: documentación interactiva generada con \texttt{swaggo/gin-swagger},
@@ -319,11 +327,9 @@ nunca solo en el cliente:
   \item El match se crea automáticamente solo si el swipe es de tipo \emph{like} y el listing
         tiene estado \texttt{active}. Un listing en estado \texttt{paused} o \texttt{sold} no
         puede recibir swipes.
-
   \item Solo los participantes de un match pueden leer y enviar mensajes. \texttt{MatchService}
         verifica que el \texttt{userID} sea el \texttt{buyer\_id} del match o el
         \texttt{seller\_id} del listing asociado antes de permitir cualquier operación de chat.
-
   \item Un listing requiere al menos una foto para poder ser creado. \textit{Validado en
         \texttt{domain.NewListing()} con la condición \texttt{len(photoURLs) == 0}.}
 
@@ -394,7 +400,6 @@ búsqueda sin modificar la firma de \texttt{ListingRepository.Search()} ni la l�
 se agrega como un nuevo campo puntero en el struct; si el campo es \texttt{nil}, el repositorio
 simplemente no aplica esa condición. La función \texttt{Search()} nunca necesita cambiar su
 signatura.
-
 \begin{lstlisting}[style=gostyle]
 // domain/listing.go
 type ListingFilter struct {
@@ -413,7 +418,6 @@ type ListingFilter struct {
 El repositorio construye la cláusula \texttt{WHERE} de forma dinámica inspeccionando qué campos
 son no-\texttt{nil}, por lo que el OCP se mantiene tanto en la interfaz como en la
 implementación.
-
 \subsection{LSP --- Sustitución de Liskov (\textit{Liskov Substitution Principle})}
 
 Toda implementación concreta de repositorio es sustituible por cualquier otra que cumpla la misma
@@ -434,7 +438,6 @@ type UserRepository interface {
 igual independientemente de si la implementación concreta accede a PostgreSQL, a una base
 en memoria o a un mock de test. El contrato de la interfaz (parámetros, valores de retorno,
 semántica de errores como \texttt{ErrNotFound}) es idéntico en todas las implementaciones.
-
 \subsection{ISP --- Segregación de Interfaces (\textit{Interface Segregation Principle})}
 
 En lugar de una única interfaz \texttt{Repository} con todos los métodos del sistema, se definen
@@ -474,10 +477,7 @@ type FeedService struct {
 \subsection{DIP --- Inversión de Dependencias (\textit{Dependency Inversion Principle})}
 
 Los módulos de alto nivel (servicios) no dependen de implementaciones concretas; dependen de
-abstracciones (interfaces). Las implementaciones concretas tampoco dependen de los servicios;
-ambas dependen de las interfaces definidas en el paquete \texttt{repository} y \texttt{auth}.
-
-El \textbf{Composition Root} en \texttt{main.go} es el único lugar donde se instancian las
+abstracciones (interfaces). Las implementaciones concretas tampoco dependen de los servicios; ambas dependen de las interfaces definidas en el paquete \texttt{repository} y \texttt{auth}. El \textbf{Composition Root} en \texttt{main.go} es el único lugar donde se instancian las
 implementaciones concretas y se inyectan por constructor, manteniendo el resto del código libre
 de acoplamientos:
 
@@ -494,7 +494,6 @@ authService := service.NewAuthService(userRepo, hasher, jwtIssuer)
 \begin{center}
 \begin{tikzpicture}[node distance=1cm and 2.1cm, >=Stealth]
   \node[classbox] (as) {\texttt{AuthService}};
-
   \node[ifcbox, right=2.3cm of as, yshift=1cm, minimum width=3.8cm] (ph)
     {\texttt{PasswordHasher}\\{\scriptsize\textit{interface}}};
   \node[ifcbox, right=2.3cm of as, yshift=-1cm, minimum width=3.8cm] (ur)
@@ -521,7 +520,6 @@ capa de autenticación. Estas funciones actúan como fábricas que centralizan l
 invariantes de negocio: el llamador no puede construir un objeto en estado inválido porque la
 única forma de obtenerlo es a través del constructor, que retorna un error descriptivo si alguna
 invariante se viola.
-
 \subsubsection{Instancias en el código}
 
 \textbf{\texttt{domain.NewListing()}} --- valida que la marca no esté vacía, el modelo no esté
@@ -538,6 +536,7 @@ func NewListing(sellerID uuid.UUID, brand, model string, year *int,
     model = strings.TrimSpace(model)
     if brand == ""           { return nil, ErrInvalidBrand }
     if model == ""           { return nil, ErrInvalidModel }
+ 
     if price <= 0            { return nil, ErrInvalidPrice }
     if year != nil && (*year < 1900 || *year > 2100) {
         return nil, ErrInvalidYear
@@ -554,10 +553,8 @@ contraseña no esté vacío.
 \textbf{\texttt{auth.NewBcryptHasher(cost int)}} --- si el \texttt{cost} proporcionado está
 fuera del rango válido de bcrypt (\texttt{MinCost}--\texttt{MaxCost}), lo reemplaza por
 \texttt{bcrypt.DefaultCost}, garantizando un \texttt{BcryptHasher} siempre operable.
-
 \textbf{\texttt{auth.NewJWTIssuer(secret string, ttl time.Duration)}} --- si el TTL es cero o
 negativo, lo reemplaza por 24 horas como valor por defecto seguro.
-
 \begin{center}
 \begin{tikzpicture}[node distance=1.1cm and 2.4cm, >=Stealth]
   \node[mybox, fill=green!15, minimum width=3.5cm] (f)
@@ -575,9 +572,7 @@ negativo, lo reemplaza por 24 horas como valor por defecto seguro.
 
 El patrón \emph{Repository} desacopla completamente la lógica de negocio del mecanismo de
 persistencia. Los servicios nunca importan \texttt{database/sql} ni conocen el dialecto SQL; solo
-operan con las interfaces de repositorio definidas en el paquete \texttt{repository}.
-
-Cada agregado de dominio tiene su propia interfaz con los métodos estrictamente necesarios para
+operan con las interfaces de repositorio definidas en el paquete \texttt{repository}. Cada agregado de dominio tiene su propia interfaz con los métodos estrictamente necesarios para
 ese agregado. La implementación concreta (\texttt{postgres*Repository}) resuelve los detalles
 de SQL, incluyendo optimizaciones como la carga por lote de fotos en \texttt{ListingRepository}
 para evitar el problema N+1 (una consulta por todas las fotos de varios listings en lugar de una
@@ -620,9 +615,7 @@ type ListingRepository interface {
 
 El patrón \emph{Strategy} se aplica en el mecanismo de hashing de contraseñas. La interfaz
 \texttt{PasswordHasher} define el contrato con dos métodos: \texttt{Hash()} para hashear una
-contraseña en texto plano y \texttt{Verify()} para compararla contra un hash almacenado.
-
-\texttt{AuthService} recibe un \texttt{PasswordHasher} en su constructor y nunca instancia
+contraseña en texto plano y \texttt{Verify()} para compararla contra un hash almacenado. \texttt{AuthService} recibe un \texttt{PasswordHasher} en su constructor y nunca instancia
 ninguna implementación concreta. Esto significa que el algoritmo de hashing puede cambiarse
 (por ejemplo, de bcrypt a argon2 o scrypt) simplemente implementando la interfaz y pasando la
 nueva implementación al constructor de \texttt{AuthService}, sin modificar una sola línea de
@@ -673,10 +666,8 @@ func (h *BcryptHasher) Verify(plain, hashed string) error {
 % ===== 7. APIs =====
 \section{APIs}
 
-El backend expone una API REST bajo el prefijo \texttt{/api/v1} usando el framework Gin 1.12.
-La documentación interactiva completa está disponible en
+El backend expone una API REST bajo el prefijo \texttt{/api/v1} usando el framework Gin 1.12. La documentación interactiva completa está disponible en
 \texttt{http://localhost:8080/swagger/index.html}, generada con \texttt{swaggo/gin-swagger}.
-
 \subsection{Autenticación de requests protegidos}
 
 Los endpoints protegidos requieren el header:
@@ -685,10 +676,8 @@ Authorization: Bearer <jwt-token>
 \end{lstlisting}
 
 El JWT contiene los claims \texttt{user\_id} (UUID), \texttt{role} (\texttt{buyer} o
-\texttt{seller}), \texttt{iat} (emitido en) y \texttt{exp} (expira en, 24 horas tras la emisión).
-El middleware \texttt{JWTAuth} valida la firma con HS256 y rechaza tokens expirados o
+\texttt{seller}), \texttt{iat} (emitido en) y \texttt{exp} (expira en, 24 horas tras la emisión). El middleware \texttt{JWTAuth} valida la firma con HS256 y rechaza tokens expirados o
 mal formados con \texttt{401 Unauthorized}.
-
 \subsection{Tabla de endpoints}
 
 \begin{longtable}{lll}
@@ -739,7 +728,7 @@ Todos los endpoints de listado (\texttt{/listings}, \texttt{/listings/me}, \text
 retornan la misma estructura paginada con el campo \texttt{items} y el conteo total:
 
 \begin{lstlisting}[style=gostyle, numbers=none]
-// GET /api/v1/listings  |  GET /api/v1/listings/me  |  GET /api/v1/feed
+// GET /api/v1/listings  | GET /api/v1/listings/me  |  GET /api/v1/feed
 {
   "items": [
     {
@@ -867,6 +856,121 @@ por defecto 20) y \texttt{offset} para paginación.
       \texttt{saveAuthData}). \\
   \bottomrule
 \end{tabular}
+\end{center}
+
+% ===== 9. PLANIFICACIÓN Y TIEMPOS =====
+\clearpage
+\section{Planificación y tiempos del proyecto}
+
+La siguiente tabla organiza las tareas del proyecto al estilo Trello, indicando el tiempo
+estimado según la complejidad observada en el código y el tiempo real invertido por el equipo. Los tiempos están expresados en horas.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.45}
+\begin{longtable}{>{\raggedright\arraybackslash}p{8cm}
+                  >{\centering\arraybackslash}p{2.8cm}
+                  >{\centering\arraybackslash}p{2.8cm}}
+
+  % ---- Encabezado principal ----
+  \rowcolor{trellohdr}
+  \textcolor{white}{\textbf{\sffamily Tarea}} &
+  \textcolor{white}{\textbf{\sffamily Tiempo estimado}} &
+  \textcolor{white}{\textbf{\sffamily Tiempo real}} \\
+  \endfirsthead
+
+  \rowcolor{trellohdr}
+  \textcolor{white}{\textbf{\sffamily Tarea}} &
+  \textcolor{white}{\textbf{\sffamily Tiempo estimado}} &
+  \textcolor{white}{\textbf{\sffamily Tiempo real}} \\
+  \endhead
+
+  % ==============================
+  % GRUPO: Planificación
+  % ==============================
+  \rowcolor{trellogrp}
+  \multicolumn{3}{l}{\textcolor{white}{\textbf{\sffamily Planificación y diseño}}} \\
+
+  Definición de requerimientos funcionales y diseño de la arquitectura del sistema
+    & 3 h &  2 h \\
+  \rowcolor{trelloalt}
+  Diseño del modelo de datos (tablas, relaciones, migraciones SQL)
+    & 3 h & 3 h \\
+
+  % ==============================
+  % GRUPO: Backend
+  % ==============================
+  \rowcolor{trellogrp}
+  \multicolumn{3}{l}{\textcolor{white}{\textbf{\sffamily Backend (Go / Gin)}}} \\
+
+  Inicialización del monorepo y configuración de Docker Compose
+    & 2 h & 1 h \\
+  \rowcolor{trelloalt}
+  Implementación de la capa de dominio: entidades y constructores con validaciones
+    & 5 h & 4 h \\
+  Implementación de repositorios PostgreSQL y migraciones SQL
+    & 6 h & 5 h \\
+  \rowcolor{trelloalt}
+  Módulo de autenticación: registro, login, JWT (HS256) y hashing bcrypt
+    & 4 h & 3 h \\
+  Módulo de gestión de perfiles de comprador (preferencias de búsqueda)
+    & 2 h & 1 h \\
+  \rowcolor{trelloalt}
+  Módulo de listings: CRUD completo con carga de fotos (N+1 avoidance)
+    & 5 h & 4 h \\
+  Módulo de feed: filtrado dinámico por preferencias del perfil del comprador
+    & 3 h & 3 h \\
+  \rowcolor{trelloalt}
+  Módulo de swipe con match automático al hacer like y chat por match
+    & 5 h & 4 h \\
+  Configuración de CORS y generación de documentación Swagger
+    & 2 h & 1 h \\
+
+  % ==============================
+  % GRUPO: Frontend
+  % ==============================
+  \rowcolor{trellogrp}
+  \multicolumn{3}{l}{\textcolor{white}{\textbf{\sffamily Frontend (Next.js / React / TypeScript)}}} \\
+
+  Inicialización del proyecto con Next.js 16, TypeScript y Tailwind CSS
+    & 1 h & 2 h \\
+  \rowcolor{trelloalt}
+  Sistema de autenticación: AuthContext, ProtectedRoute y hooks JWT
+    & 4 h & 5 h \\
+  Páginas de registro e inicio de sesión
+    & 2 h & 2 h \\
+  \rowcolor{trelloalt}
+  Página de feed con mecanismo de swipe y notificación de match
+    & 4 h & 5 h \\
+  Páginas de matches y chat con polling HTTP cada 3 segundos
+    & 4 h & 6 h \\
+  \rowcolor{trelloalt}
+  Páginas de listings: listado, nueva publicación y edición
+    & 4 h & 5 h \\
+  Páginas de perfil y edición de preferencias de búsqueda
+    & 2 h & 2 h \\
+  \rowcolor{trelloalt}
+  Componente PhotoUpload con vista previa y soporte multi-archivo
+    & 2 h & 4 h \\
+
+  % ==============================
+  % GRUPO: Integración y cierre
+  % ==============================
+  \rowcolor{trellogrp}
+  \multicolumn{3}{l}{\textcolor{white}{\textbf{\sffamily Integración y cierre}}} \\
+
+  Corrección de bugs de integración frontend-backend (CORS, contratos API, polling)
+    & 4 h & 6 h \\
+  \rowcolor{trelloalt}
+  Redacción del informe del proyecto
+    & 4 h & 4 h \\
+
+  % ==============================
+  % TOTALES
+  % ==============================
+  \rowcolor{trellofoot}
+  \textbf{Total} & \textbf{71 h} & \textbf{72 h} \\
+
+\end{longtable}
 \end{center}
 
 \end{document}
