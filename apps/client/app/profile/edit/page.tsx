@@ -33,33 +33,24 @@ function EditProfileContent() {
           setBudgetMin(data.budget_min?.toString() || '');
           setBudgetMax(data.budget_max?.toString() || '');
         }
-      } catch {
+      } catch (err: any) {
         setError('Error al cargar preferencias');
+        router.push('/login');
       } finally {
         setIsLoading(false);
       }
     };
 
     loadPreferences();
-  }, []);
+  }, [router]);
 
-  const handleUpdate = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess(false);
 
-    const minVal = budgetMin ? parseInt(budgetMin, 10) : null;
-    const maxVal = budgetMax ? parseInt(budgetMax, 10) : null;
-
-    if (budgetMin && (isNaN(minVal!) || minVal! < 0)) {
-      setError('El presupuesto mínimo no es válido');
-      return;
-    }
-    if (budgetMax && (isNaN(maxVal!) || maxVal! < 0)) {
-      setError('El presupuesto máximo no es válido');
-      return;
-    }
-    if (minVal != null && maxVal != null && minVal > maxVal) {
+    // Validar que el presupuesto máximo sea mayor que el mínimo
+    if (budgetMin && budgetMax && parseInt(budgetMin) > parseInt(budgetMax)) {
       setError('El presupuesto máximo debe ser mayor que el mínimo');
       return;
     }
@@ -71,15 +62,15 @@ function EditProfileContent() {
         method: 'PUT',
         body: JSON.stringify({
           vehicle_type: vehicleType || null,
-          budget_min: minVal,
-          budget_max: maxVal,
+          budget_min: budgetMin ? parseInt(budgetMin) : null,
+          budget_max: budgetMax ? parseInt(budgetMax) : null,
         }),
       });
 
       setSuccess(true);
       setTimeout(() => router.push('/profile'), 1500);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al actualizar preferencias');
+    } catch (err: any) {
+      setError(err.message || 'Error al actualizar preferencias');
     } finally {
       setIsSaving(false);
     }

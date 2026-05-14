@@ -15,14 +15,14 @@ function NewListingContent() {
     price: 0,
     vehicle_type: '',
     description: '',
+    mileage: 0,
   });
   const [photos, setPhotos] = useState<string[]>([]);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -31,7 +31,7 @@ function NewListingContent() {
       return;
     }
 
-    if (!formData.brand || !formData.model || !formData.price) {
+    if (!formData.brand || !formData.model || formData.price === 0) {
       setError('Completa todos los campos requeridos');
       return;
     }
@@ -52,10 +52,10 @@ function NewListingContent() {
         }),
       });
 
-      setSuccess(true);
-      setTimeout(() => router.push('/listings'), 1500);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al publicar el vehículo');
+      alert('¡Vehículo publicado exitosamente!');
+      router.push('/listings');
+    } catch (err: any) {
+      setError(err.message || 'Error al publicar el vehículo');
     } finally {
       setIsSaving(false);
     }
@@ -74,12 +74,6 @@ function NewListingContent() {
         {error && (
           <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4">
             <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-6 rounded-lg bg-green-50 border border-green-200 p-4">
-            <p className="text-green-700">✓ ¡Vehículo publicado exitosamente! Redirigiendo...</p>
           </div>
         )}
 
@@ -175,6 +169,21 @@ function NewListingContent() {
                 <option value="van">Van</option>
                 <option value="otro">Otro</option>
               </select>
+            </div>
+
+            {/* Kilometraje */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kilometraje
+              </label>
+              <input
+                type="number"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ej: 50000"
+                min="0"
+                value={formData.mileage}
+                onChange={(e) => setFormData({ ...formData, mileage: parseInt(e.target.value) })}
+              />
             </div>
 
             {/* Descripción */}
