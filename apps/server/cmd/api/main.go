@@ -13,6 +13,7 @@ import (
 	"github.com/BenjaminAliagaMardones/automatch/internal/service"
 	"github.com/BenjaminAliagaMardones/automatch/internal/shared/config"
 	"github.com/BenjaminAliagaMardones/automatch/internal/shared/db"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -67,6 +68,17 @@ func main() {
 	matchHandler := handler.NewMatchHandler(matchService)
 
 	r := gin.Default()
+
+	// CORS para permitir que el frontend (Next.js) llame a la API desde el navegador.
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * 60 * 60,
+	}))
+
 	r.GET("/api/v1/health", healthCheck)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

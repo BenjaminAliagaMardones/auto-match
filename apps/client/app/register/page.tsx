@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchAPI } from '@/lib/api';
+import { fetchAPI, getTokenClaims } from '@/lib/api';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -12,6 +12,10 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (getTokenClaims()) router.replace('/profile');
+  }, [router]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,8 +32,8 @@ export default function RegisterPage() {
       // Si todo sale bien, lo redirigimos al login para que entre
       // (Opcional: puedes guardar el token aquí si tu API de Go lo devuelve al registrar)
       router.push('/login');
-    } catch (err: any) {
-      setError(err.message || 'Hubo un error al crear la cuenta');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Hubo un error al crear la cuenta');
     } finally {
       setIsLoading(false);
     }

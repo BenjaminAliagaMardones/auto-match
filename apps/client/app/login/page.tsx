@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchAPI } from '@/lib/api';
+import Link from 'next/link';
+import { fetchAPI, getTokenClaims } from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,11 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Si ya hay sesión, no tiene sentido ver el formulario.
+  useEffect(() => {
+    if (getTokenClaims()) router.replace('/profile');
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +33,8 @@ export default function LoginPage() {
       
       // Redirigimos al inicio o al perfil tras un login exitoso
       router.push('/profile');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
       setIsLoading(false);
     }
@@ -79,6 +85,13 @@ export default function LoginPage() {
             {isLoading ? 'Cargando...' : 'Entrar'}
           </button>
         </form>
+
+        <p className="text-center text-sm text-gray-600">
+          ¿No tienes cuenta?{' '}
+          <Link href="/register" className="font-medium text-blue-600 hover:underline">
+            Crea una aquí
+          </Link>
+        </p>
       </div>
     </div>
   );

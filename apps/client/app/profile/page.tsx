@@ -2,32 +2,42 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchAPI } from '@/lib/api';
 import Link from 'next/link';
+import { fetchAPI, getTokenClaims, type TokenClaims } from '@/lib/api';
+
+type BuyerPrefs = {
+  vehicle_type?: string;
+  budget_min?: number | null;
+  budget_max?: number | null;
+};
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<any>(null);
-  const [error, setError] = useState('');
+  const [claims, setClaims] = useState<TokenClaims | null>(null);
+  const [prefs, setPrefs] = useState<BuyerPrefs | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        // Al llamar a fetchAPI, esta inyectará automáticamente el token guardado
-        const data = await fetchAPI('/profile/me');
-        setProfile(data);
-      } catch (err: any) {
-        // Si falla (token inválido o expirado), lo mandamos al login
-        setError('Sesión expirada o no autorizada');
-        localStorage.removeItem('token');
-        router.push('/login');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const t = getTokenClaims();
+    if (!t) {
+      router.push('/login');
+      return;
+    }
+    setClaims(t);
 
-    loadProfile();
+    // Solo los buyers tienen preferencias en buyer_profiles.
+    // Para sellers no llamamos /profile/me porque no aporta nada útil.
+    if (t.role === 'buyer') {
+      fetchAPI('/profile/me')
+        .then((data) => setPrefs(data))
+        .catch(() => {
+          localStorage.removeItem('token');
+          router.push('/login');
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
+    }
   }, [router]);
 
   const handleLogout = () => {
@@ -43,9 +53,11 @@ export default function ProfilePage() {
     );
   }
 
-  if (error || !profile) {
-    return null; // El useEffect ya se encarga de redirigir
-  }
+  if (!claims) return null;
+
+  const isSeller = claims.role === 'seller';
+  const hasPrefs =
+    prefs && (prefs.vehicle_type || prefs.budget_min != null || prefs.budget_max != null);
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 text-black">
@@ -53,53 +65,77 @@ export default function ProfilePage() {
         <div className="bg-blue-600 px-6 py-4">
           <h1 className="text-2xl font-bold text-white">Mi Perfil</h1>
         </div>
-        
+
         <div className="p-6 space-y-4">
           <div className="flex flex-col border-b border-gray-100 pb-4">
-            <span className="text-sm font-medium text-gray-500">Correo Electrónico</span>
-            <span className="text-lg text-gray-900">{profile.email}</span>
-          </div>
-          
-          <div className="flex flex-col border-b border-gray-100 pb-4">
             <span className="text-sm font-medium text-gray-500">Rol de Usuario</span>
-            <span className="text-lg capitalize text-gray-900">{profile.role}</span>
+            <span className="text-lg text-gray-900">
+              {isSeller ? 'Vendedor' : 'Comprador'}
+            </span>
           </div>
-          
-          {profile.role === 'seller' && (
-            <div className="pt-4 border-b border-gray-100 pb-4">
-              <Link 
-                href="/listings"
-                className="inline-block rounded-md bg-green-500 px-4 py-2 text-white font-medium hover:bg-green-600 transition-colors"
-              >
-                Gestionar mis vehículos
-              </Link>
+
+          {isSeller ? (
+            <div className="pt-2">
+              <p className="text-sm text-gray-600 mb-3">
+                Como vendedor, puedes publicar y gestionar tus vehículos.
+              </p>
+              <div className="flex gap-3">
+                <Link
+                  href="/listings"
+                  className="rounded-md bg-green-500 px-4 py-2 text-white font-medium hover:bg-green-600 transition-colors"
+                >
+                  Gestionar mis vehículos
+                </Link>
+                <Link
+                  href="/listings/new"
+                  className="rounded-md bg-blue-50 px-4 py-2 text-blue-700 font-medium hover:bg-blue-100 transition-colors"
+                >
+                  + Publicar nuevo
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg bg-gray-50 p-4">
+              <h3 className="mb-3 font-semibold text-gray-700">Preferencias de búsqueda</h3>
+              {hasPrefs ? (
+                <>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Tipo de vehículo:</span>{' '}
+                    {prefs?.vehicle_type || 'No definido'}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    <span className="font-medium">Presupuesto:</span>{' '}
+                    {prefs?.budget_min != null
+                      ? `$${prefs.budget_min.toLocaleString('es-CL')}`
+                      : '—'}{' '}
+                    a{' '}
+                    {prefs?.budget_max != null
+                      ? `$${prefs.budget_max.toLocaleString('es-CL')}`
+                      : '—'}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Aún no has configurado tus preferencias.
+                </p>
+              )}
             </div>
           )}
 
-          {profile.preferences && (
-            <div className="mt-6 rounded-lg bg-gray-50 p-4">
-              <h3 className="mb-3 font-semibold text-gray-700">Preferencias de Búsqueda</h3>
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Tipo de vehículo:</span> {profile.preferences.vehicle_type || 'No definido'}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">
-                <span className="font-medium">Rango de presupuesto:</span> ${profile.preferences.budget_min} - ${profile.preferences.budget_max}
-              </p>
-            </div>
-          )}
-          
-          <div className="pt-6 flex gap-4">
-            <Link 
-              href="/profile/edit"
-              className="flex-1 text-center rounded-md bg-blue-50 px-4 py-2 text-blue-700 font-medium hover:bg-blue-100 transition-colors"
-            >
-              Editar Preferencias
-            </Link>
-            <button 
+          <div className="pt-6 flex gap-4 border-t border-gray-100">
+            {!isSeller && (
+              <Link
+                href="/profile/edit"
+                className="flex-1 text-center rounded-md bg-blue-50 px-4 py-2 text-blue-700 font-medium hover:bg-blue-100 transition-colors"
+              >
+                Editar preferencias
+              </Link>
+            )}
+            <button
               onClick={handleLogout}
               className="flex-1 rounded-md bg-red-500 px-4 py-2 text-white font-medium hover:bg-red-600 transition-colors"
             >
-              Cerrar Sesión
+              Cerrar sesión
             </button>
           </div>
         </div>
