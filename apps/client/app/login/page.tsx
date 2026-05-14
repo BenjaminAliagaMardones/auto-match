@@ -2,10 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { fetchAPI } from '@/lib/api';
-import { saveAuthData } from '@/lib/auth';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,7 +10,6 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { setUser } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,26 +22,11 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       
-      // Guardar token y usuario
-      saveAuthData(data.token, {
-        id: data.user.id,
-        email: data.user.email,
-        role: data.user.role as 'buyer' | 'seller',
-      });
+      // Guardamos el token en el navegador
+      localStorage.setItem('token', data.token);
       
-      // Actualizar contexto
-      setUser({
-        id: data.user.id,
-        email: data.user.email,
-        role: data.user.role,
-      });
-      
-      // Redirigir según el rol
-      if (data.user.role === 'buyer') {
-        router.push('/feed');
-      } else {
-        router.push('/listings');
-      }
+      // Redirigimos al inicio o al perfil tras un login exitoso
+      router.push('/profile');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -56,14 +37,9 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-10 shadow-lg">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">
-            Iniciar Sesión
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            AutoMatch - Plataforma de matchmaking de vehículos
-          </p>
-        </div>
+        <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          Iniciar Sesión
+        </h2>
         
         {error && (
           <div className="rounded-md bg-red-50 p-4">
@@ -103,15 +79,6 @@ export default function LoginPage() {
             {isLoading ? 'Cargando...' : 'Entrar'}
           </button>
         </form>
-
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            ¿No tienes cuenta?{' '}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              Crear una
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );
