@@ -33,7 +33,7 @@ cd apps/client && npm install && npm run dev   # frontend
 ```
 apps/
 ├── server/   → Go + Gin + Postgres (arquitectura en capas)
-└── client/   → Next.js + React + TypeScript
+└── client/   → Vite + React
 .docs/endpoints/  → contratos de la API por módulo
 ```
 
