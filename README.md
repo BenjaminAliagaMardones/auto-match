@@ -1,114 +1,75 @@
 # AutoMatch
 
-Plataforma de matchmaking para vehículos usados. Proyecto universitario, asignatura **Diseño de Software** (UCT).
+Plataforma de matchmaking para vehículos usados con feed adaptativo tipo *swipe*. Conecta compradores y vendedores según preferencias y habilita chat directo cuando hay match.
 
-Esta primera entrega cubre el módulo de **Autenticación y Perfil** (FR-01, FR-02) sobre una **arquitectura en capas** con varios patrones de diseño aplicados (ver [`apps/server/docs/PATTERNS.md`](apps/server/docs/PATTERNS.md)).
-
-## Layout (monorepo)
-
-```
-.
-├── apps/
-│   ├── server/          → backend Go + Gin
-│   └── client/          → frontend (placeholder)
-├── .docs/
-│   └── endpoints/       → contrato de la API por módulo
-├── compose.yml          → docker compose (postgres + server)
-├── Makefile
-└── README.md
-```
+Proyecto universitario · **Diseño de Software** · UCT 2026.
 
 ## Stack
 
-- **Backend:** Go 1.26 + Gin
-- **DB:** PostgreSQL 16
-- **Auth:** JWT (HS256) + bcrypt
-- **Frontend:** a definir (React/Next sugerido en el PDF)
-- **Infra:** Docker Compose
+![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)
+![Gin](https://img.shields.io/badge/Gin-008ECF?logo=gin&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-HS256-000000?logo=jsonwebtokens&logoColor=white)
+![Swagger](https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?logo=swagger&logoColor=black)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 
-## Levantar el proyecto
-
-```bash
-make up
-```
-
-Esto arranca:
-- `postgres` en `localhost:5432`
-- `server` en `localhost:8080`
-
-Las migraciones SQL en `apps/server/migrations/` se ejecutan automáticamente la primera vez.
-
-### Sin Docker
+## Cómo levantarlo
 
 ```bash
-cp .env.example apps/server/.env  # ajustar si hace falta
-make server-tidy
-make server-run
+make up                  # backend + postgres
+cd apps/client && npm install && npm run dev   # frontend
 ```
 
-## Probar la API
+- 🚀 API → http://localhost:8080
+- 📘 Swagger → http://localhost:8080/swagger/index.html
+- 🖥️ Frontend → http://localhost:3000
 
-Con el stack arriba, abrir en el navegador:
+## Estructura
 
-**[http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)**
+```
+apps/
+├── server/   → Go + Gin + Postgres (arquitectura en capas)
+└── client/   → Next.js + React + TypeScript
+.docs/endpoints/  → contratos de la API por módulo
+```
 
-Ahí están todos los endpoints documentados, se pueden ejecutar desde la UI. Para los protegidos:
-1. Hacer `POST /auth/register` y luego `POST /auth/login`.
-2. Copiar el `token` de la respuesta.
-3. Click en el botón **Authorize** (arriba a la derecha) y pegar `Bearer <token>`.
-4. Ya se pueden ejecutar `GET /profile/me` y `PUT /profile/me`.
+## Módulos (16 endpoints REST)
 
-## Endpoints
+| Módulo | FR | Estado |
+|---|---|---|
+| Auth + Perfil | FR-01, FR-02 | ✅ |
+| Listings | FR-12 | ✅ |
+| Feed + Swipe | FR-03, FR-04 | ✅ |
+| Match + Chat | FR-19 | ✅ |
 
-Ver [`.docs/endpoints/`](.docs/endpoints/) para documentación en markdown, o el Swagger UI arriba.
+## Arquitectura y patrones
 
-| Módulo | Estado |
+**Capas:** `Handler → Service → Repository → Domain`
+
+**SOLID:** SRP, OCP, LSP, ISP, DIP — todos aplicados y verificados con tests.
+
+**Patrones aplicados:**
+
+| Categoría | Patrón |
 |---|---|
-| [Auth + Perfil](.docs/endpoints/auth.md) | implementado |
-| [Listings](.docs/endpoints/listings.md) | placeholder |
-| [Feed / Swipe](.docs/endpoints/feed.md) | placeholder |
-| [Match + Chat](.docs/endpoints/match.md) | placeholder |
+| Creacional | Factory Method (`NewUser`, `NewListing`, ...) |
+| Estructural | Repository · DTO |
+| Comportamiento | Strategy (`PasswordHasher`) · Middleware (JWT) · Specification (`ListingFilter`) |
 
-## Smoke test rápido
-
-```bash
-# 1. Registrar
-curl -X POST localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"ben@uct.cl","password":"secret123","role":"buyer"}'
-
-# 2. Login
-TOKEN=$(curl -s -X POST localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"ben@uct.cl","password":"secret123"}' | jq -r .token)
-
-# 3. Mi perfil
-curl localhost:8080/api/v1/profile/me -H "Authorization: Bearer $TOKEN"
-
-# 4. Configurar preferencias
-curl -X PUT localhost:8080/api/v1/profile/me \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"vehicle_type":"suv","budget_min":5000000,"budget_max":12000000}'
-```
-
-## Para el equipo
-
-Cada integrante debe trabajar dentro de la estructura ya montada:
-
-- **Listings (FR-12)** — completar `apps/server/migrations/003_listings.sql`, `apps/server/internal/domain/listing.go`, y crear repo/service/handler siguiendo el patrón del módulo Auth.
-- **Feed/Swipe (FR-03, FR-04)** y **Match + Chat (FR-19)** — análogo, usando `apps/server/migrations/004_matches.sql` y `apps/server/internal/domain/match.go`.
-- **Frontend** — trabajar en `apps/client/`. La API REST está documentada en `.docs/endpoints/`.
-
-Para proteger endpoints, registrar las rutas dentro del grupo `protected` en `apps/server/cmd/api/main.go` y obtener el `user_id` con `middleware.UserIDFrom(c)`.
+Detalle completo en [`apps/server/docs/PATTERNS.md`](apps/server/docs/PATTERNS.md) y [`apps/server/docs/ARCHITECTURE.md`](apps/server/docs/ARCHITECTURE.md).
 
 ## Tests
 
 ```bash
-make server-test
+make server-test   # 22 tests unitarios con mocks
 ```
 
 ## Equipo
 
-Benjamín Aliaga · Juan Carrera · Benjamín de la Fuente · Lizardo Salazar
-Profesor: Guido Mellado · Ayudante: Luciano Revillod · UCT 2026
+👨‍💻 Benjamín Aliaga · Juan Carrera · Benjamín de la Fuente · Lizardo Salazar
+
+🎓 Prof. Guido Mellado · Ay. Luciano Revillod · UCT 2026
