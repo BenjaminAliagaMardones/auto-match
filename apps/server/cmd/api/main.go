@@ -13,7 +13,6 @@ import (
 	"github.com/BenjaminAliagaMardones/automatch/internal/service"
 	"github.com/BenjaminAliagaMardones/automatch/internal/shared/config"
 	"github.com/BenjaminAliagaMardones/automatch/internal/shared/db"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
