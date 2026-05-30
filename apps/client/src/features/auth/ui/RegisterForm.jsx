@@ -7,6 +7,7 @@ const registerSchema = z.object({
     email: z.string().email('Email inválido'),
     password: z.string().min(6, 'Mínimo 6 caracteres'),
     confirmPassword: z.string().min(6, 'Mínimo 6 caracteres'),
+    role: z.enum(['buyer', 'seller'], { message: 'Selecciona un tipo de cuenta' }),
 }).refine((data) => data.password === data.confirmPassword, {
     message: 'Las contraseñas no coinciden',
     path: ['confirmPassword'],
@@ -21,6 +22,7 @@ export default function RegisterForm({ onSubmit, isLoading }) {
         onSubmit({
             email: data.email,
             password: data.password,
+            role: data.role,
         });
     };
 
@@ -62,6 +64,21 @@ export default function RegisterForm({ onSubmit, isLoading }) {
                     autoComplete="new-password"
                 />
                 {errors.confirmPassword && <p className="form-error">{errors.confirmPassword.message}</p>}
+            </div>
+
+            <div className="form-group">
+                <label className="form-label" htmlFor="register-role">Tipo de cuenta</label>
+                <select
+                    {...register('role')}
+                    id="register-role"
+                    defaultValue=""
+                    className={`form-input ${errors.role ? 'error' : ''}`}
+                >
+                    <option value="" disabled>Selecciona…</option>
+                    <option value="buyer">Comprador</option>
+                    <option value="seller">Vendedor</option>
+                </select>
+                {errors.role && <p className="form-error">{errors.role.message}</p>}
             </div>
 
             <button
