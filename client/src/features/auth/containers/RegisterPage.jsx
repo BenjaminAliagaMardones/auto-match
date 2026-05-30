@@ -3,14 +3,17 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 export default function RegisterPage() {
-  const { register: registerUser, isRegistering, registerError } = useAuth();
+  const { register: registerUser, isRegistering, registerError, user } = useAuth();
   const navigate = useNavigate();
 
   const handleRegister = (data) => {
     registerUser(data, {
       onSuccess: () => {
-        // Redirige al login con mensaje de éxito
-        navigate('/auth/login', { state: { registered: true } });
+        if (user) {
+          navigate('/app/feed');
+        } else {
+          navigate('/auth/login', { state: { registered: true } });
+        }
       },
       onError: (err) => {
         console.error("Falló el registro:", err);

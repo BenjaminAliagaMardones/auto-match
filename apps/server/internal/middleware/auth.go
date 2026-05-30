@@ -12,7 +12,6 @@ import (
 
 const (
 	ctxKeyUserID = "auth.user_id"
-	ctxKeyRole   = "auth.role"
 )
 
 // JWTAuth aplica el patrón Chain of Responsibility de Gin: valida el token
@@ -31,7 +30,6 @@ func JWTAuth(j *auth.JWTIssuer) gin.HandlerFunc {
 			return
 		}
 		c.Set(ctxKeyUserID, claims.UserID)
-		c.Set(ctxKeyRole, string(claims.Role))
 		c.Next()
 	}
 }

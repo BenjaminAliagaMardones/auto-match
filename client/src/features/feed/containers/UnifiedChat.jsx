@@ -1,47 +1,69 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-
-const MOCK_MESSAGES_DB = {
-  1: [
-    { id: 1, text: '¡Hola! Estoy interesado en el Corolla.', sender: 'me', time: '10:30 AM' },
-    { id: 2, text: '¡Hola! Sí, todavía lo tengo. ¿Te gustaría venir a verlo?', sender: 'them', time: '10:42 AM' },
-  ],
-  2: [
-    { id: 1, text: 'Hola, ¿qué kilometraje tiene el Civic?', sender: 'me', time: 'Ayer' },
-    { id: 2, text: 'Tiene 32.000 km.', sender: 'them', time: 'Ayer' },
-    { id: 3, text: '¿Es el último precio?', sender: 'me', time: 'Ayer' },
-    { id: 4, text: 'El precio es conversable, podemos hablarlo.', sender: 'them', time: 'Ayer' },
-  ],
-  3: [
-    { id: 1, text: 'Hola, hermoso el Mustang.', sender: 'me', time: 'Lun' },
-    { id: 2, text: 'Gracias, está impecable. Cualquier duda me avisas.', sender: 'them', time: 'Lun' },
-    { id: 3, text: 'Gracias, te aviso cualquier cosa.', sender: 'me', time: 'Lun' },
-  ]
-};
-
-const CHAT_INFO = {
-  1: { name: 'Toyota Corolla XSE', seller: 'Carlos' },
-  2: { name: 'Honda Civic Si', seller: 'Ana' },
-  3: { name: 'Ford Mustang GT', seller: 'Roberto' },
-};
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import useWebSocket from 'react-use-websocket';
+import { apiClient } from '../../../services/apiClient';
+import { useAuthStore } from '../../../hooks/useAuth';
 
 export default function BuyerChat() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
+  
+  // Use state passed from BuyerMatches if available
+  const [info, setInfo] = useState({ 
+    name: location.state?.matchName || 'Chat', 
+    seller: location.state?.sellerName || 'Cargando...' 
+  });
+  
   const messagesEndRef = useRef(null);
 
-  const info = CHAT_INFO[id] || { name: 'Chat Desconocido', seller: 'Usuario' };
+  const { user } = useAuthStore();
+  
+  const token = sessionStorage.getItem('auth-token');
+  const WS_URL = token ? `ws://localhost:8080/api/v1/ws/chat?token=${token}` : null;
 
+  // Cargar historial de mensajes al montar
   useEffect(() => {
-    // Load mock messages for the chat id
-    if (MOCK_MESSAGES_DB[id]) {
-      setMessages(MOCK_MESSAGES_DB[id]);
-    } else {
-      setMessages([{ id: 1, text: 'Inicia la conversación.', sender: 'system', time: '' }]);
-    }
+    const fetchHistory = async () => {
+      try {
+        const history = await apiClient.get(`matches/${id}/messages`).json();
+        if (history) {
+          setMessages(history.map(m => ({
+            id: m.id,
+            text: m.body || m.text, // dependiendo del backend struct
+            senderId: m.senderId || m.SenderID,
+            time: new Date(m.createdAt || m.CreatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          })));
+        }
+      } catch (error) {
+        console.error("Error cargando historial", error);
+      }
+    };
+    fetchHistory();
   }, [id]);
+
+  // Hook de WebSockets
+  const { sendMessage } = useWebSocket(WS_URL, {
+    onOpen: () => console.log('WebSocket conectado'),
+    onMessage: (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.matchId === id) {
+          setMessages((prev) => [...prev, {
+            id: msg.id,
+            text: msg.text,
+            senderId: msg.senderId,
+            time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }]);
+        }
+      } catch (err) {
+        console.error("Error parseando mensaje WS", err);
+      }
+    },
+    shouldReconnect: () => true,
+  });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,25 +73,14 @@ export default function BuyerChat() {
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    const newMsg = {
-      id: Date.now(),
-      text: inputText,
-      sender: 'me',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages([...messages, newMsg]);
+    // Enviar mensaje real a través del WebSocket
+    const payload = JSON.stringify({
+      matchId: id,
+      text: inputText
+    });
+    sendMessage(payload);
+    
     setInputText('');
-
-    // Simulate reply
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        text: 'Genial, lo reviso y te comento. (Simulación de respuesta automática)',
-        sender: 'them',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-    }, 1500);
   };
 
   return (
@@ -111,8 +122,8 @@ export default function BuyerChat() {
               return <div key={msg.id} className="chat-system-msg">{msg.text}</div>;
             }
             return (
-              <div key={msg.id} className={`chat-bubble-wrapper ${msg.sender === 'me' ? 'sent' : 'received'}`}>
-                <div className={`chat-bubble ${msg.sender === 'me' ? 'sent' : 'received'}`}>
+              <div key={msg.id} className={`chat-bubble-wrapper ${msg.senderId === user?.id ? 'sent' : 'received'}`}>
+                <div className={`chat-bubble ${msg.senderId === user?.id ? 'sent' : 'received'}`}>
                   {msg.text}
                 </div>
                 <span className="chat-bubble-time">{msg.time}</span>

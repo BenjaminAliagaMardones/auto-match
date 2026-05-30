@@ -2,7 +2,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
 
 const registerSchema = z.object({
     email: z.string().email('Email inválido'),
@@ -14,18 +13,14 @@ const registerSchema = z.object({
 });
 
 export default function RegisterForm({ onSubmit, isLoading }) {
-    const [selectedRole, setSelectedRole] = useState('buyer');
-
     const { register, handleSubmit, formState: { errors } } = useForm({
         resolver: zodResolver(registerSchema),
     });
 
     const handleFormSubmit = (data) => {
-        // Enviar email, password y role al handler
         onSubmit({
             email: data.email,
             password: data.password,
-            role: selectedRole,
         });
     };
 
@@ -67,28 +62,6 @@ export default function RegisterForm({ onSubmit, isLoading }) {
                     autoComplete="new-password"
                 />
                 {errors.confirmPassword && <p className="form-error">{errors.confirmPassword.message}</p>}
-            </div>
-
-            <div className="form-group">
-                <label className="form-label">¿Qué buscas?</label>
-                <div className="role-selector">
-                    <button
-                        type="button"
-                        className={`role-option ${selectedRole === 'buyer' ? 'active' : ''}`}
-                        onClick={() => setSelectedRole('buyer')}
-                    >
-                        <span className="role-option-emoji">🔍</span>
-                        <span className="role-option-label">Comprar</span>
-                    </button>
-                    <button
-                        type="button"
-                        className={`role-option ${selectedRole === 'seller' ? 'active' : ''}`}
-                        onClick={() => setSelectedRole('seller')}
-                    >
-                        <span className="role-option-emoji">🏷️</span>
-                        <span className="role-option-label">Vender</span>
-                    </button>
-                </div>
             </div>
 
             <button

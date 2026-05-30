@@ -39,13 +39,11 @@ type CreateListingInput struct {
 }
 
 func (s *ListingService) Create(ctx context.Context, in CreateListingInput) (*domain.Listing, error) {
-	u, err := s.users.FindByID(ctx, in.SellerID)
+	_, err := s.users.FindByID(ctx, in.SellerID)
 	if err != nil {
 		return nil, err
 	}
-	if u.Role != domain.RoleSeller {
-		return nil, ErrNotSeller
-	}
+
 
 	l, err := domain.NewListing(
 		in.SellerID, in.Brand, in.Model, in.Year, in.Price,

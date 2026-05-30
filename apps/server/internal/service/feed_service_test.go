@@ -2,7 +2,6 @@ package service_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/BenjaminAliagaMardones/automatch/internal/domain"
@@ -30,22 +29,12 @@ func (f *fakeProfileRepo) Upsert(_ context.Context, p *domain.BuyerProfile) erro
 	return nil
 }
 
-func TestFeed_RejectsSeller(t *testing.T) {
-	userRepo := newFakeUserRepoWithRole()
-	sellerID := uuid.New()
-	userRepo.users[sellerID] = &domain.User{ID: sellerID, Role: domain.RoleSeller}
-	feed := service.NewFeedService(userRepo, newFakeProfileRepo(), newFakeListingRepo())
 
-	_, err := feed.Build(context.Background(), sellerID, 10, 0)
-	if !errors.Is(err, service.ErrNotBuyer) {
-		t.Fatalf("esperaba ErrNotBuyer, got %v", err)
-	}
-}
 
 func TestFeed_OK_WithoutProfile(t *testing.T) {
-	userRepo := newFakeUserRepoWithRole()
+	userRepo := newFakeUserRepoMock()
 	buyerID := uuid.New()
-	userRepo.users[buyerID] = &domain.User{ID: buyerID, Role: domain.RoleBuyer}
+	userRepo.users[buyerID] = &domain.User{ID: buyerID}
 	feed := service.NewFeedService(userRepo, newFakeProfileRepo(), newFakeListingRepo())
 
 	out, err := feed.Build(context.Background(), buyerID, 10, 0)

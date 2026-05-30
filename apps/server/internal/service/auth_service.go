@@ -31,7 +31,6 @@ func NewAuthService(users repository.UserRepository, hasher auth.PasswordHasher,
 type RegisterInput struct {
 	Email    string
 	Password string
-	Role     domain.Role
 }
 
 func (s *AuthService) Register(ctx context.Context, in RegisterInput) (*domain.User, error) {
@@ -42,7 +41,7 @@ func (s *AuthService) Register(ctx context.Context, in RegisterInput) (*domain.U
 	if err != nil {
 		return nil, err
 	}
-	u, err := domain.NewUser(in.Email, hash, in.Role)
+	u, err := domain.NewUser(in.Email, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +65,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (token 
 	if err := s.hasher.Verify(password, u.PasswordHash); err != nil {
 		return "", nil, ErrInvalidCredentials
 	}
-	token, err = s.jwt.Issue(u.ID, u.Role)
+	token, err = s.jwt.Issue(u.ID)
 	if err != nil {
 		return "", nil, err
 	}

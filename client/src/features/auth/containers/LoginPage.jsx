@@ -12,13 +12,8 @@ export default function LoginPage() {
 
   const handleLogin = (data) => {
     login(data, {
-      onSuccess: (response) => {
-        const role = response.user?.role;
-        if (role === 'seller') {
-          navigate('/seller/dashboard');
-        } else {
-          navigate('/buyer/feed');
-        }
+      onSuccess: () => {
+        navigate('/app/feed');
       },
       onError: (err) => {
         console.error("Falló el login:", err);

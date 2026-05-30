@@ -32,13 +32,11 @@ func NewFeedService(
 }
 
 func (s *FeedService) Build(ctx context.Context, buyerID uuid.UUID, limit, offset int) ([]*domain.Listing, error) {
-	u, err := s.users.FindByID(ctx, buyerID)
+	_, err := s.users.FindByID(ctx, buyerID)
 	if err != nil {
 		return nil, err
 	}
-	if u.Role != domain.RoleBuyer {
-		return nil, ErrNotBuyer
-	}
+
 
 	// Aplicar preferencias del perfil si están configuradas. El
 	// ProfileService.Get devuelve un perfil vacío si no existe, así que
