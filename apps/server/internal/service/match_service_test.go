@@ -99,15 +99,15 @@ type matchSUT struct {
 func newMatchSUT(t *testing.T) *matchSUT {
 	t.Helper()
 	listingRepo := newFakeListingRepo()
-	userRepo := newFakeUserRepoWithRole()
+	userRepo := newFakeUserRepoMock()
 	swipeRepo := &fakeSwipeRepo{}
 	matchRepo := newFakeMatchRepo()
 	messageRepo := newFakeMessageRepo()
 
 	buyerID := uuid.New()
 	sellerID := uuid.New()
-	userRepo.users[buyerID] = &domain.User{ID: buyerID, Role: domain.RoleBuyer}
-	userRepo.users[sellerID] = &domain.User{ID: sellerID, Role: domain.RoleSeller}
+	userRepo.users[buyerID] = &domain.User{ID: buyerID}
+	userRepo.users[sellerID] = &domain.User{ID: sellerID}
 
 	svc := service.NewMatchService(userRepo, listingRepo, swipeRepo, matchRepo, messageRepo)
 	return &matchSUT{
@@ -180,16 +180,6 @@ func TestSwipe_InactiveListing_Rejected(t *testing.T) {
 	_, err := s.svc.Swipe(context.Background(), s.buyerID, l.ID, domain.SwipeLike)
 	if !errors.Is(err, service.ErrListingNotActive) {
 		t.Fatalf("esperaba ErrListingNotActive, got %v", err)
-	}
-}
-
-func TestSwipe_AsSeller_Rejected(t *testing.T) {
-	s := newMatchSUT(t)
-	l := s.addActiveListing()
-
-	_, err := s.svc.Swipe(context.Background(), s.sellerID, l.ID, domain.SwipeLike)
-	if !errors.Is(err, service.ErrNotBuyer) {
-		t.Fatalf("esperaba ErrNotBuyer, got %v", err)
 	}
 }
 

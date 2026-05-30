@@ -62,7 +62,7 @@ func newSUT() (*service.AuthService, *fakeUserRepo) {
 func TestRegister_OK(t *testing.T) {
 	svc, repo := newSUT()
 	u, err := svc.Register(context.Background(), service.RegisterInput{
-		Email: "Foo@Bar.cl", Password: "secret123", Role: domain.RoleBuyer,
+		Email: "Foo@Bar.cl", Password: "secret123",
 	})
 	if err != nil {
 		t.Fatalf("err: %v", err)
@@ -78,7 +78,7 @@ func TestRegister_OK(t *testing.T) {
 func TestRegister_WeakPassword(t *testing.T) {
 	svc, _ := newSUT()
 	_, err := svc.Register(context.Background(), service.RegisterInput{
-		Email: "a@a.cl", Password: "123", Role: domain.RoleBuyer,
+		Email: "a@a.cl", Password: "123",
 	})
 	if !errors.Is(err, service.ErrWeakPassword) {
 		t.Fatalf("esperaba ErrWeakPassword, got %v", err)
@@ -87,7 +87,7 @@ func TestRegister_WeakPassword(t *testing.T) {
 
 func TestRegister_DuplicateEmail(t *testing.T) {
 	svc, _ := newSUT()
-	in := service.RegisterInput{Email: "dup@x.cl", Password: "secret123", Role: domain.RoleBuyer}
+	in := service.RegisterInput{Email: "dup@x.cl", Password: "secret123"}
 	if _, err := svc.Register(context.Background(), in); err != nil {
 		t.Fatalf("primer registro falló: %v", err)
 	}
@@ -99,7 +99,7 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 
 func TestLogin_OK(t *testing.T) {
 	svc, _ := newSUT()
-	in := service.RegisterInput{Email: "ok@x.cl", Password: "secret123", Role: domain.RoleSeller}
+	in := service.RegisterInput{Email: "ok@x.cl", Password: "secret123"}
 	if _, err := svc.Register(context.Background(), in); err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +114,7 @@ func TestLogin_OK(t *testing.T) {
 
 func TestLogin_WrongPassword(t *testing.T) {
 	svc, _ := newSUT()
-	in := service.RegisterInput{Email: "bad@x.cl", Password: "secret123", Role: domain.RoleBuyer}
+	in := service.RegisterInput{Email: "bad@x.cl", Password: "secret123"}
 	if _, err := svc.Register(context.Background(), in); err != nil {
 		t.Fatal(err)
 	}

@@ -15,10 +15,13 @@ type SwipeResponse struct {
 }
 
 type MatchResponse struct {
-	ID        string    `json:"id"`
-	BuyerID   string    `json:"buyer_id"`
-	ListingID string    `json:"listing_id"`
-	CreatedAt time.Time `json:"created_at"`
+	ID               string    `json:"id"`
+	BuyerID          string    `json:"buyer_id"`
+	ListingID        string    `json:"listing_id"`
+	ListingBrand     string    `json:"listing_brand,omitempty"`
+	ListingModel     string    `json:"listing_model,omitempty"`
+	OtherUserEmail   string    `json:"other_user_email,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
 }
 
 type MatchListResponse struct {

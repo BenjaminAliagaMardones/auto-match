@@ -85,7 +85,20 @@ func (h *MatchHandler) ListMine(c *gin.Context) {
 	}
 	items := make([]dto.MatchResponse, 0, len(list))
 	for _, m := range list {
-		items = append(items, toMatchResponse(m))
+		resp := toMatchResponse(m)
+		if listing, err := h.matches.GetListing(c.Request.Context(), m.ListingID); err == nil {
+			resp.ListingBrand = listing.Brand
+			resp.ListingModel = listing.Model
+			
+			otherUserID := m.BuyerID
+			if userID == m.BuyerID {
+				otherUserID = listing.SellerID
+			}
+			if otherUser, err := h.matches.GetUser(c.Request.Context(), otherUserID); err == nil {
+				resp.OtherUserEmail = otherUser.Email
+			}
+		}
+		items = append(items, resp)
 	}
 	c.JSON(http.StatusOK, dto.MatchListResponse{Items: items, Count: len(items)})
 }

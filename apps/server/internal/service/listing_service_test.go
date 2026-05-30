@@ -61,19 +61,19 @@ func (f *fakeListingRepo) Delete(_ context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// fakeUserRepoWithRole permite controlar el rol que se devuelve.
-type fakeUserRepoWithRole struct {
+// fakeUserRepoMock permite simular los usuarios en BD.
+type fakeUserRepoMock struct {
 	users map[uuid.UUID]*domain.User
 }
 
-func newFakeUserRepoWithRole() *fakeUserRepoWithRole {
-	return &fakeUserRepoWithRole{users: map[uuid.UUID]*domain.User{}}
+func newFakeUserRepoMock() *fakeUserRepoMock {
+	return &fakeUserRepoMock{users: map[uuid.UUID]*domain.User{}}
 }
-func (f *fakeUserRepoWithRole) Create(_ context.Context, _ *domain.User) error { return nil }
-func (f *fakeUserRepoWithRole) FindByEmail(_ context.Context, _ string) (*domain.User, error) {
-	return nil, repository.ErrNotFound
+func (f *fakeUserRepoMock) Create(_ context.Context, _ *domain.User) error { return nil }
+func (f *fakeUserRepoMock) FindByEmail(_ context.Context, _ string) (*domain.User, error) {
+	return nil, nil
 }
-func (f *fakeUserRepoWithRole) FindByID(_ context.Context, id uuid.UUID) (*domain.User, error) {
+func (f *fakeUserRepoMock) FindByID(_ context.Context, id uuid.UUID) (*domain.User, error) {
 	u, ok := f.users[id]
 	if !ok {
 		return nil, repository.ErrNotFound
@@ -81,11 +81,11 @@ func (f *fakeUserRepoWithRole) FindByID(_ context.Context, id uuid.UUID) (*domai
 	return u, nil
 }
 
-func newListingSUT(role domain.Role) (*service.ListingService, *fakeListingRepo, uuid.UUID) {
+func newListingSUT() (*service.ListingService, *fakeListingRepo, uuid.UUID) {
 	listingRepo := newFakeListingRepo()
-	userRepo := newFakeUserRepoWithRole()
+	userRepo := newFakeUserRepoMock()
 	sellerID := uuid.New()
-	userRepo.users[sellerID] = &domain.User{ID: sellerID, Role: role}
+	userRepo.users[sellerID] = &domain.User{ID: sellerID}
 	svc := service.NewListingService(listingRepo, userRepo)
 	return svc, listingRepo, sellerID
 }
@@ -105,7 +105,7 @@ func validCreateInput(sellerID uuid.UUID) service.CreateListingInput {
 }
 
 func TestCreate_OK(t *testing.T) {
-	svc, _, sellerID := newListingSUT(domain.RoleSeller)
+	svc, _, sellerID := newListingSUT()
 	l, err := svc.Create(context.Background(), validCreateInput(sellerID))
 	if err != nil {
 		t.Fatalf("err: %v", err)
@@ -118,16 +118,10 @@ func TestCreate_OK(t *testing.T) {
 	}
 }
 
-func TestCreate_RejectsBuyer(t *testing.T) {
-	svc, _, buyerID := newListingSUT(domain.RoleBuyer)
-	_, err := svc.Create(context.Background(), validCreateInput(buyerID))
-	if !errors.Is(err, service.ErrNotSeller) {
-		t.Fatalf("esperaba ErrNotSeller, got %v", err)
-	}
-}
+
 
 func TestCreate_InvalidPrice(t *testing.T) {
-	svc, _, sellerID := newListingSUT(domain.RoleSeller)
+	svc, _, sellerID := newListingSUT()
 	in := validCreateInput(sellerID)
 	in.Price = 0
 	_, err := svc.Create(context.Background(), in)
@@ -137,7 +131,7 @@ func TestCreate_InvalidPrice(t *testing.T) {
 }
 
 func TestCreate_NoPhotos(t *testing.T) {
-	svc, _, sellerID := newListingSUT(domain.RoleSeller)
+	svc, _, sellerID := newListingSUT()
 	in := validCreateInput(sellerID)
 	in.PhotoURLs = nil
 	_, err := svc.Create(context.Background(), in)
@@ -147,7 +141,7 @@ func TestCreate_NoPhotos(t *testing.T) {
 }
 
 func TestUpdate_OnlyOwner(t *testing.T) {
-	svc, _, sellerID := newListingSUT(domain.RoleSeller)
+	svc, _, sellerID := newListingSUT()
 	l, err := svc.Create(context.Background(), validCreateInput(sellerID))
 	if err != nil {
 		t.Fatal(err)
@@ -161,7 +155,7 @@ func TestUpdate_OnlyOwner(t *testing.T) {
 }
 
 func TestUpdate_OK(t *testing.T) {
-	svc, _, sellerID := newListingSUT(domain.RoleSeller)
+	svc, _, sellerID := newListingSUT()
 	l, err := svc.Create(context.Background(), validCreateInput(sellerID))
 	if err != nil {
 		t.Fatal(err)
@@ -184,7 +178,7 @@ func TestUpdate_OK(t *testing.T) {
 }
 
 func TestDelete_OnlyOwner(t *testing.T) {
-	svc, _, sellerID := newListingSUT(domain.RoleSeller)
+	svc, _, sellerID := newListingSUT()
 	l, err := svc.Create(context.Background(), validCreateInput(sellerID))
 	if err != nil {
 		t.Fatal(err)
@@ -199,7 +193,7 @@ func TestDelete_OnlyOwner(t *testing.T) {
 }
 
 func TestGet_NotFound(t *testing.T) {
-	svc, _, _ := newListingSUT(domain.RoleSeller)
+	svc, _, _ := newListingSUT()
 	_, err := svc.Get(context.Background(), uuid.New())
 	if !errors.Is(err, service.ErrListingNotFound) {
 		t.Fatalf("esperaba ErrListingNotFound, got %v", err)

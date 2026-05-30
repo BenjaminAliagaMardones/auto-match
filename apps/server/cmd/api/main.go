@@ -67,20 +67,27 @@ func main() {
 	feedHandler := handler.NewFeedHandler(feedService)
 	matchHandler := handler.NewMatchHandler(matchService)
 
+	chatHub := service.NewChatHub(matchService)
+	go chatHub.Run()
+	chatHandler := handler.NewChatHandler(chatHub, jwtIssuer)
+
 	r := gin.Default()
 
-	// CORS para permitir que el frontend (Next.js) llame a la API desde el navegador.
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * 60 * 60,
-	}))
+	r.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, PATCH, DELETE")
 
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
 	r.GET("/api/v1/health", healthCheck)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 
 	api := r.Group("/api/v1")
 	{
@@ -109,7 +116,11 @@ func main() {
 			protected.GET("/matches/:id/messages", matchHandler.ListMessages)
 			protected.POST("/matches/:id/messages", matchHandler.SendMessage)
 		}
+
+		// WebSockets (valida token desde el handler)
+		api.GET("/ws/chat", chatHandler.Connect)
 	}
+
 
 	log.Printf("automatch api escuchando en :%s", cfg.Port)
 	log.Printf("swagger UI en http://localhost:%s/swagger/index.html", cfg.Port)
