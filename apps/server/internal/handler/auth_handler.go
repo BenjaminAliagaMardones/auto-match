@@ -38,13 +38,15 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	u, err := h.auth.Register(c.Request.Context(), service.RegisterInput{
 		Email:    req.Email,
 		Password: req.Password,
+		Role:     domain.Role(req.Role),
 	})
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrEmailTaken):
 			c.JSON(http.StatusConflict, dto.ErrorResponse{Error: err.Error()})
 		case errors.Is(err, service.ErrWeakPassword),
-			errors.Is(err, domain.ErrInvalidEmail):
+			errors.Is(err, domain.ErrInvalidEmail),
+			errors.Is(err, domain.ErrInvalidRole):
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: err.Error()})
 		default:
 			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "error interno"})
@@ -87,6 +89,7 @@ func toUserResponse(u *domain.User) dto.UserResponse {
 	return dto.UserResponse{
 		ID:        u.ID.String(),
 		Email:     u.Email,
+		Role:      string(u.Role),
 		CreatedAt: u.CreatedAt,
 	}
 }

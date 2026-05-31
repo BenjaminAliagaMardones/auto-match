@@ -14,19 +14,21 @@
 
 coverage.out
 
-# Node / React / Next
+# Node / frontend dependencies
 node_modules/
 **/node_modules/
 
-.next/
-**/.next/
-
+# Builds
 dist/
 **/dist/
-
 build/
 **/build/
+.next/
+**/.next/
+out/
+**/out/
 
+# Generated files
 next-env.d.ts
 
 # Logs

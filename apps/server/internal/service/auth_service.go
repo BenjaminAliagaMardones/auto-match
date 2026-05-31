@@ -31,6 +31,7 @@ func NewAuthService(users repository.UserRepository, hasher auth.PasswordHasher,
 type RegisterInput struct {
 	Email    string
 	Password string
+	Role     domain.Role
 }
 
 func (s *AuthService) Register(ctx context.Context, in RegisterInput) (*domain.User, error) {
@@ -41,7 +42,7 @@ func (s *AuthService) Register(ctx context.Context, in RegisterInput) (*domain.U
 	if err != nil {
 		return nil, err
 	}
-	u, err := domain.NewUser(in.Email, hash)
+	u, err := domain.NewUser(in.Email, hash, in.Role)
 	if err != nil {
 		return nil, err
 	}
