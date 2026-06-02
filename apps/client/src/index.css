@@ -441,6 +441,35 @@ body {
   padding: 1.5rem;
 }
 
+.swipe-card-ad-image-area {
+  background: linear-gradient(135deg, var(--charcoal) 0%, #4d536c 100%);
+}
+
+.swipe-card-ad-visual {
+  width: 180px;
+  height: 180px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.swipe-card-ad-badge {
+  min-width: 48px;
+  justify-content: center;
+}
+
+.swipe-card-ad-cta {
+  font-size: 1.45rem;
+}
+
 .swipe-card-car-shape {
   width: 80%;
   height: auto;

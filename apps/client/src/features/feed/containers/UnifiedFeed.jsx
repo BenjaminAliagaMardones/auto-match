@@ -3,7 +3,16 @@ import SwipeCard from '../components/SwipeCard';
 import { useBuyerFeed } from '../hooks/useBuyerFeed';
 
 export default function BuyerFeed() {
-  const { currentCar, nextCar, handleSwipe, handleLike, handleDislike, exitDirectionRef } = useBuyerFeed();
+  const {
+    currentItem,
+    nextItem,
+    handleSwipe,
+    handleLike,
+    handleDislike,
+    exitDirectionRef,
+  } = useBuyerFeed();
+
+  const isVehicleSlide = currentItem?.type === 'vehicle';
 
   return (
     <>
@@ -11,8 +20,8 @@ export default function BuyerFeed() {
       <header className="feed-top-nav">
         <div className="feed-location-info">
           <span className="feed-location-text">AUTOMATCH · TEMUCO</span>
-          <span className="feed-location-text" style={{opacity: 0.6}}>+150KM</span>
-          <h1 className="feed-header-title">Tu <span className="feed-header-title-italic">match</span> de<br/>hoy</h1>
+          <span className="feed-location-text" style={{ opacity: 0.6 }}>+150KM</span>
+          <h1 className="feed-header-title">Tu <span className="feed-header-title-italic">match</span> de<br />hoy</h1>
         </div>
         <button className="feed-filter-btn" aria-label="Filters">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -34,28 +43,28 @@ export default function BuyerFeed() {
         <span className="feed-filter-tag">PRECIO</span>
         <span className="feed-filter-tag">KM</span>
         <span className="feed-filter-tag">AÑO</span>
-        <span className="feed-filter-tag" style={{borderBottom: '2px solid var(--charcoal)', paddingBottom: '4px'}}>SEDÁN</span>
+        <span className="feed-filter-tag" style={{ borderBottom: '2px solid var(--charcoal)', paddingBottom: '4px' }}>SEDÁN</span>
       </div>
 
       {/* Main Content */}
       <main className="feed-main-area">
-        {currentCar ? (
+        {currentItem ? (
           <>
             {/* Card Stack */}
             <div className="card-stack">
               <AnimatePresence>
-                {nextCar && (
+                {nextItem && (
                   <SwipeCard
-                    key={nextCar.id}
-                    car={nextCar}
+                    key={nextItem.id}
+                    item={nextItem}
                     onSwipe={() => {}}
                     isTop={false}
                   />
                 )}
-                {currentCar && (
+                {currentItem && (
                   <SwipeCard
-                    key={currentCar.id}
-                    car={currentCar}
+                    key={currentItem.id}
+                    item={currentItem}
                     onSwipe={handleSwipe}
                     isTop={true}
                     exitDirectionRef={exitDirectionRef}
@@ -65,29 +74,31 @@ export default function BuyerFeed() {
             </div>
 
             {/* Action Buttons */}
-            <div className="action-buttons-container">
-              <div className="action-buttons-row">
-                <div className="action-btn-wrapper">
-                  <button className="action-btn action-btn-dislike" onClick={handleDislike}>✕</button>
-                  <span className="action-btn-label">DESCARTAR</span>
-                </div>
-                
-                <div className="action-btn-wrapper" style={{marginTop: '10px'}}>
-                  <button className="action-btn action-btn-info" onClick={() => {}}>i</button>
-                  <span className="action-btn-label">DETALLE</span>
-                </div>
+            {isVehicleSlide && (
+              <div className="action-buttons-container">
+                <div className="action-buttons-row">
+                  <div className="action-btn-wrapper">
+                    <button className="action-btn action-btn-dislike" onClick={handleDislike}>✕</button>
+                    <span className="action-btn-label">DESCARTAR</span>
+                  </div>
 
-                <div className="action-btn-wrapper" style={{marginTop: '10px'}}>
-                  <button className="action-btn action-btn-super" onClick={() => {}}>★</button>
-                  <span className="action-btn-label">SÚPER</span>
-                </div>
+                  <div className="action-btn-wrapper" style={{ marginTop: '10px' }}>
+                    <button className="action-btn action-btn-info" onClick={() => {}}>i</button>
+                    <span className="action-btn-label">DETALLE</span>
+                  </div>
 
-                <div className="action-btn-wrapper">
-                  <button className="action-btn action-btn-like" onClick={handleLike}>♥</button>
-                  <span className="action-btn-label" style={{marginTop: '-2px'}}>ME GUSTA</span>
+                  <div className="action-btn-wrapper" style={{ marginTop: '10px' }}>
+                    <button className="action-btn action-btn-super" onClick={() => {}}>★</button>
+                    <span className="action-btn-label">SÚPER</span>
+                  </div>
+
+                  <div className="action-btn-wrapper">
+                    <button className="action-btn action-btn-like" onClick={handleLike}>♥</button>
+                    <span className="action-btn-label" style={{ marginTop: '-2px' }}>ME GUSTA</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </>
         ) : (
           <div className="empty-state">
