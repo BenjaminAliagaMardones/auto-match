@@ -78,7 +78,7 @@ func TestRegister_OK(t *testing.T) {
 func TestRegister_WeakPassword(t *testing.T) {
 	svc, _ := newSUT()
 	_, err := svc.Register(context.Background(), service.RegisterInput{
-		Email: "a@a.cl", Password: "123", Role: domain.RoleBuyer,
+		Email: "a@a.cl", Password: "123",
 	})
 	if !errors.Is(err, service.ErrWeakPassword) {
 		t.Fatalf("esperaba ErrWeakPassword, got %v", err)

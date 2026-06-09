@@ -58,13 +58,11 @@ func (s *MatchService) Swipe(
 	buyerID, listingID uuid.UUID,
 	dir domain.SwipeDirection,
 ) (*SwipeResult, error) {
-	u, err := s.users.FindByID(ctx, buyerID)
+	_, err := s.users.FindByID(ctx, buyerID)
 	if err != nil {
 		return nil, err
 	}
-	if u.Role != domain.RoleBuyer {
-		return nil, ErrNotBuyer
-	}
+
 
 	listing, err := s.listings.FindByID(ctx, listingID)
 	if err != nil {
@@ -158,3 +156,27 @@ func (s *MatchService) assertParticipant(ctx context.Context, m *domain.Match, u
 	}
 	return ErrNotMatchParticipant
 }
+
+// GetParticipants devuelve el BuyerID y el SellerID asociados a un match
+func (s *MatchService) GetParticipants(ctx context.Context, matchID uuid.UUID) ([]uuid.UUID, error) {
+	m, err := s.matches.FindByID(ctx, matchID)
+	if err != nil {
+		return nil, err
+	}
+	listing, err := s.listings.FindByID(ctx, m.ListingID)
+	if err != nil {
+		return nil, err
+	}
+	return []uuid.UUID{m.BuyerID, listing.SellerID}, nil
+}
+
+// GetListing permite acceder al listing asociado a un match (útil para enriquecer respuestas)
+func (s *MatchService) GetListing(ctx context.Context, listingID uuid.UUID) (*domain.Listing, error) {
+	return s.listings.FindByID(ctx, listingID)
+}
+
+// GetUser permite acceder al usuario asociado a un match (útil para enriquecer respuestas)
+func (s *MatchService) GetUser(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+	return s.users.FindByID(ctx, userID)
+}
+

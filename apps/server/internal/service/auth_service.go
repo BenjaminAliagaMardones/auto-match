@@ -66,7 +66,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (token 
 	if err := s.hasher.Verify(password, u.PasswordHash); err != nil {
 		return "", nil, ErrInvalidCredentials
 	}
-	token, err = s.jwt.Issue(u.ID, u.Role)
+	token, err = s.jwt.Issue(u.ID)
 	if err != nil {
 		return "", nil, err
 	}

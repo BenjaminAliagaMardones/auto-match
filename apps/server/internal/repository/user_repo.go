@@ -33,11 +33,9 @@ func NewPostgresUserRepository(db *sql.DB) UserRepository {
 }
 
 func (r *postgresUserRepository) Create(ctx context.Context, u *domain.User) error {
-	const q = `
-		INSERT INTO users (id, email, password_hash, role, created_at)
-		VALUES ($1, $2, $3, $4, $5)
-	`
-	_, err := r.db.ExecContext(ctx, q, u.ID, u.Email, u.PasswordHash, string(u.Role), u.CreatedAt)
+	const q = `INSERT INTO users (id, email, password_hash, role, created_at)
+	      VALUES ($1, $2, $3, $4, $5)`
+	_, err := r.db.ExecContext(ctx, q, u.ID, u.Email, u.PasswordHash, u.Role, u.CreatedAt)
 	if err != nil {
 		if isUniqueViolation(err) {
 			return ErrEmailConflict
@@ -65,13 +63,12 @@ type rowScanner interface {
 
 func scanUser(row rowScanner) (*domain.User, error) {
 	var u domain.User
-	var role string
-	if err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &role, &u.CreatedAt); err != nil {
+	if err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.CreatedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}
 		return nil, err
 	}
-	u.Role = domain.Role(role)
+
 	return &u, nil
 }

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/BenjaminAliagaMardones/automatch/internal/domain"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -15,8 +14,7 @@ var (
 )
 
 type Claims struct {
-	UserID uuid.UUID   `json:"user_id"`
-	Role   domain.Role `json:"role"`
+	UserID uuid.UUID `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
@@ -32,11 +30,10 @@ func NewJWTIssuer(secret string, ttl time.Duration) *JWTIssuer {
 	return &JWTIssuer{secret: []byte(secret), ttl: ttl}
 }
 
-func (j *JWTIssuer) Issue(userID uuid.UUID, role domain.Role) (string, error) {
+func (j *JWTIssuer) Issue(userID uuid.UUID) (string, error) {
 	now := time.Now().UTC()
 	claims := Claims{
 		UserID: userID,
-		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(j.ttl)),

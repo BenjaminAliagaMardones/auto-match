@@ -1,26 +1,16 @@
-# AutoMatch — Client
+# React + Vite
 
-Frontend del proyecto. **A construir por el integrante encargado de UI.**
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Sugerencia (PDF, sección 4): React.js o Next.js. Punto de partida visual disponible en el HTML estático en la raíz del repo (`motor-match-v3.html`) y el diseño en Claude Design.
+Currently, two official plugins are available:
 
-## Inicializar
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-```bash
-# desde apps/client/
-npm create vite@latest . -- --template react-ts
-# o
-npx create-next-app@latest .
-```
+## React Compiler
 
-## Variables esperadas
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-```
-VITE_API_URL=http://localhost:8080/api/v1
-```
+## Expanding the ESLint configuration
 
-(o `NEXT_PUBLIC_API_URL` si se usa Next).
-
-## Endpoints disponibles
-
-Ver [`.docs/endpoints/`](../../.docs/endpoints/) en la raíz del repo.
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.

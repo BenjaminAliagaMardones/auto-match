@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// Role distingue compradores de vendedores. Coincide con el CHECK de la
+// columna users.role en Postgres ('buyer' | 'seller').
 type Role string
 
 const (
@@ -29,22 +31,22 @@ type User struct {
 
 var (
 	ErrInvalidEmail = errors.New("email inválido")
-	ErrInvalidRole  = errors.New("rol inválido")
 	ErrEmptyHash    = errors.New("password hash vacío")
+	ErrInvalidRole  = errors.New("rol inválido: debe ser buyer o seller")
 )
 
 // NewUser actúa como Factory Method: garantiza invariantes al construir la
-// entidad (email normalizado, rol válido, hash presente).
+// entidad (email normalizado, hash presente, rol válido).
 func NewUser(email string, passwordHash string, role Role) (*User, error) {
 	email = strings.TrimSpace(strings.ToLower(email))
 	if email == "" || !strings.Contains(email, "@") {
 		return nil, ErrInvalidEmail
 	}
-	if !role.Valid() {
-		return nil, ErrInvalidRole
-	}
 	if passwordHash == "" {
 		return nil, ErrEmptyHash
+	}
+	if !role.Valid() {
+		return nil, ErrInvalidRole
 	}
 	return &User{
 		ID:           uuid.New(),
