@@ -25,6 +25,7 @@ export function useSellerListings() {
     listings,
     isLoading,
     activeCount: listings.filter(l => l.status === 'active').length,
+    pausedCount: listings.filter(l => l.status === 'paused').length,
     soldCount: listings.filter(l => l.status === 'sold').length,
     totalCount: listings.length
   };

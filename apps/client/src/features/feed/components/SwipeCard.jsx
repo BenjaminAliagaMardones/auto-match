@@ -71,18 +71,23 @@ export default function SwipeCard({ car, onSwipe, isTop, exitDirectionRef }) {
       </motion.div>
 
       {/* Top Image Area */}
-      <div className="swipe-card-image-area">
+      <div
+        className="swipe-card-image-area"
+        style={car.photo ? { backgroundImage: `url(${car.photo})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+      >
         <div className="swipe-card-top-tags">
-          <div className="swipe-card-view-tag">
-            {car.viewType}
-          </div>
-          <div className="swipe-card-match-badge">
-            <span className="swipe-card-match-number">{car.match}</span>
-            <span className="swipe-card-match-text">MATCH</span>
-          </div>
+          {car.viewType && (
+            <div className="swipe-card-view-tag">{car.viewType}</div>
+          )}
+          {car.match != null && (
+            <div className="swipe-card-match-badge">
+              <span className="swipe-card-match-number">{car.match}</span>
+              <span className="swipe-card-match-text">MATCH</span>
+            </div>
+          )}
         </div>
-        
-        <CarSilhouette />
+
+        {!car.photo && <CarSilhouette />}
 
         <div className="swipe-card-name-overlay">
           <div className="swipe-card-make">{car.make} - <span style={{opacity: 0.8}}>{car.year}</span></div>
@@ -94,11 +99,13 @@ export default function SwipeCard({ car, onSwipe, isTop, exitDirectionRef }) {
       <div className="swipe-card-info-panel">
         <div className="swipe-card-price-row">
           <div className="swipe-card-price">{car.price}</div>
-          <div className="swipe-card-type-badge">{car.type}</div>
+          {car.type && <div className="swipe-card-type-badge">{car.type}</div>}
         </div>
         <div className="swipe-card-details-text">
-          {car.km} · <span style={{textTransform: 'lowercase'}}>{car.transmission}</span><br />
-          {car.location}
+          {[car.km, car.transmission && car.transmission.toLowerCase(), car.location].filter(Boolean).join(' · ')}
+          {car.description && !car.km && !car.transmission && !car.location && (
+            <span>{car.description.substring(0, 80)}{car.description.length > 80 ? '…' : ''}</span>
+          )}
         </div>
       </div>
     </motion.div>

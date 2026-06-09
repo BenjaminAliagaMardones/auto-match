@@ -29,12 +29,12 @@ export default function BuyerChat() {
     const fetchHistory = async () => {
       try {
         const history = await apiClient.get(`matches/${id}/messages`).json();
-        if (history) {
-          setMessages(history.map(m => ({
+        if (history && history.items) {
+          setMessages(history.items.map(m => ({
             id: m.id,
-            text: m.body || m.text, // dependiendo del backend struct
-            senderId: m.senderId || m.SenderID,
-            time: new Date(m.createdAt || m.CreatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            text: m.body,
+            senderId: m.sender_id,
+            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           })));
         }
       } catch (error) {
@@ -89,7 +89,7 @@ export default function BuyerChat() {
         
         {/* Chat Header */}
         <header className="chat-header">
-          <button className="chat-back-btn" onClick={() => navigate('/buyer/matches')}>
+          <button className="chat-back-btn" onClick={() => navigate('/app/matches')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>

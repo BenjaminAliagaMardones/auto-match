@@ -13,7 +13,7 @@ const StatusBadge = ({ status }) => {
 
 export default function SellerDashboard() {
   const navigate = useNavigate();
-  const { listings, isLoading, activeCount, soldCount, totalCount } = useSellerListings();
+  const { listings, isLoading, activeCount, pausedCount, soldCount, totalCount } = useSellerListings();
 
   return (
     <>
@@ -44,12 +44,12 @@ export default function SellerDashboard() {
             <span className="seller-stat-label">Activos</span>
           </div>
           <div className="seller-stat-card">
-            <span className="seller-stat-number">{soldCount}</span>
-            <span className="seller-stat-label">Vendidos</span>
+            <span className="seller-stat-number">{pausedCount}</span>
+            <span className="seller-stat-label">Pausados</span>
           </div>
           <div className="seller-stat-card">
-            <span className="seller-stat-number">{totalCount}</span>
-            <span className="seller-stat-label">Total</span>
+            <span className="seller-stat-number">{soldCount}</span>
+            <span className="seller-stat-label">Vendidos</span>
           </div>
         </div>
 
@@ -88,7 +88,7 @@ export default function SellerDashboard() {
                     <StatusBadge status={listing.status} />
                   </div>
                   <p className="seller-listing-details">
-                    {listing.year ? `${listing.year} · ` : ''}{listing.price?.toLocaleString() || '0'}
+                    {listing.year ? `${listing.year} · ` : ''}US$ {listing.price?.toLocaleString('es-CL') || '0'}
                   </p>
                 </div>
               </div>

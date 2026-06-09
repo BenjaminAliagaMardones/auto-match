@@ -7,7 +7,6 @@ export default function NewListing() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  // Form state
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
@@ -15,7 +14,7 @@ export default function NewListing() {
     price: '',
     vehicle_type: 'SEDÁN',
     description: '',
-    photo_url: '' // We will convert this to an array for the API
+    photo_url: '',
   });
 
   const handleChange = (e) => {
@@ -36,16 +35,13 @@ export default function NewListing() {
         price: parseInt(formData.price, 10),
         vehicle_type: formData.vehicle_type,
         description: formData.description,
-        photo_urls: formData.photo_url ? [formData.photo_url] : []
+        photo_urls: [formData.photo_url],
       };
-
       await apiClient.post('listings', { json: payload }).json();
-      
-      // Success: Navigate back to the seller dashboard
       navigate('/app/listings');
     } catch (err) {
-      console.error("Error creating listing", err);
-      setError("Ocurrió un error al publicar el auto. Verifica los datos.");
+      console.error('Error creating listing', err);
+      setError('Ocurrió un error al publicar el auto. Verifica los datos.');
     } finally {
       setIsSubmitting(false);
     }
@@ -63,81 +59,62 @@ export default function NewListing() {
         <div className="chat-header-info">
           <h2 className="chat-name">Publicar Auto</h2>
         </div>
-        <div style={{ width: '24px' }}></div> {/* Spacer for centering */}
+        <div style={{ width: '24px' }}></div>
       </header>
 
-      <main className="feed-main-area" style={{ alignItems: 'stretch', padding: '1.5rem', overflowY: 'auto', backgroundColor: '#fff' }}>
-        {error && <div className="form-error" style={{ color: 'red', marginBottom: '1rem', padding: '1rem', backgroundColor: '#fee' }}>{error}</div>}
-        
-        <form onSubmit={handleSubmit} className="new-listing-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          
-          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label htmlFor="brand" style={{ fontWeight: 600, fontSize: '0.9rem' }}>Marca *</label>
-            <input 
-              type="text" 
-              id="brand" 
-              name="brand" 
-              value={formData.brand} 
-              onChange={handleChange} 
-              required 
-              placeholder="Ej. Toyota"
-              style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc' }}
+      <main className="feed-main-area new-listing-main">
+        {error && <div className="alert-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="new-listing-form">
+
+          <div className="form-group">
+            <label htmlFor="brand" className="form-label">Marca *</label>
+            <input
+              type="text" id="brand" name="brand"
+              value={formData.brand} onChange={handleChange}
+              required placeholder="Ej. Toyota"
+              className="form-input"
             />
           </div>
 
-          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label htmlFor="model" style={{ fontWeight: 600, fontSize: '0.9rem' }}>Modelo *</label>
-            <input 
-              type="text" 
-              id="model" 
-              name="model" 
-              value={formData.model} 
-              onChange={handleChange} 
-              required 
-              placeholder="Ej. Corolla XSE"
-              style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc' }}
+          <div className="form-group">
+            <label htmlFor="model" className="form-label">Modelo *</label>
+            <input
+              type="text" id="model" name="model"
+              value={formData.model} onChange={handleChange}
+              required placeholder="Ej. Corolla XSE"
+              className="form-input"
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-              <label htmlFor="year" style={{ fontWeight: 600, fontSize: '0.9rem' }}>Año</label>
-              <input 
-                type="number" 
-                id="year" 
-                name="year" 
-                value={formData.year} 
-                onChange={handleChange} 
-                min="1950"
-                max={new Date().getFullYear() + 1}
+          <div className="new-listing-row">
+            <div className="form-group">
+              <label htmlFor="year" className="form-label">Año</label>
+              <input
+                type="number" id="year" name="year"
+                value={formData.year} onChange={handleChange}
+                min="1950" max={new Date().getFullYear() + 1}
                 placeholder="2024"
-                style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc' }}
+                className="form-input"
               />
             </div>
-            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-              <label htmlFor="price" style={{ fontWeight: 600, fontSize: '0.9rem' }}>Precio (USD) *</label>
-              <input 
-                type="number" 
-                id="price" 
-                name="price" 
-                value={formData.price} 
-                onChange={handleChange} 
-                required 
-                min="1"
-                placeholder="15000"
-                style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc' }}
+            <div className="form-group">
+              <label htmlFor="price" className="form-label">Precio (USD) *</label>
+              <input
+                type="number" id="price" name="price"
+                value={formData.price} onChange={handleChange}
+                required min="1" placeholder="15000"
+                className="form-input"
               />
             </div>
           </div>
 
-          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label htmlFor="vehicle_type" style={{ fontWeight: 600, fontSize: '0.9rem' }}>Tipo de Vehículo</label>
-            <select 
-              id="vehicle_type" 
-              name="vehicle_type" 
-              value={formData.vehicle_type} 
-              onChange={handleChange}
-              style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc', backgroundColor: '#fff' }}
+          <div className="form-group">
+            <label htmlFor="vehicle_type" className="form-label">Tipo de Vehículo</label>
+            <select
+              id="vehicle_type" name="vehicle_type"
+              value={formData.vehicle_type} onChange={handleChange}
+              className="form-input"
             >
               <option value="SEDÁN">Sedán</option>
               <option value="SUV">SUV</option>
@@ -147,49 +124,27 @@ export default function NewListing() {
             </select>
           </div>
 
-          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label htmlFor="photo_url" style={{ fontWeight: 600, fontSize: '0.9rem' }}>URL de la Foto *</label>
-            <input 
-              type="url" 
-              id="photo_url" 
-              name="photo_url" 
-              value={formData.photo_url} 
-              onChange={handleChange} 
-              required 
-              placeholder="https://ejemplo.com/mifoto.jpg"
-              style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc' }}
+          <div className="form-group">
+            <label htmlFor="photo_url" className="form-label">URL de la Foto *</label>
+            <input
+              type="url" id="photo_url" name="photo_url"
+              value={formData.photo_url} onChange={handleChange}
+              required placeholder="https://ejemplo.com/mifoto.jpg"
+              className="form-input"
             />
           </div>
 
-          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label htmlFor="description" style={{ fontWeight: 600, fontSize: '0.9rem' }}>Descripción</label>
-            <textarea 
-              id="description" 
-              name="description" 
-              value={formData.description} 
-              onChange={handleChange} 
-              rows="4"
-              placeholder="Detalles sobre el vehículo..."
-              style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc', resize: 'vertical' }}
+          <div className="form-group">
+            <label htmlFor="description" className="form-label">Descripción</label>
+            <textarea
+              id="description" name="description"
+              value={formData.description} onChange={handleChange}
+              rows="4" placeholder="Detalles sobre el vehículo..."
+              className="form-input new-listing-textarea"
             ></textarea>
           </div>
 
-          <button 
-            type="submit" 
-            disabled={isSubmitting}
-            style={{
-              padding: '1rem',
-              backgroundColor: 'var(--charcoal)',
-              color: 'var(--cream)',
-              border: 'none',
-              borderRadius: '30px',
-              fontWeight: 700,
-              fontSize: '1rem',
-              marginTop: '1rem',
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              opacity: isSubmitting ? 0.7 : 1
-            }}
-          >
+          <button type="submit" disabled={isSubmitting} className="btn-primary new-listing-submit">
             {isSubmitting ? 'Publicando...' : 'Publicar Auto'}
           </button>
         </form>

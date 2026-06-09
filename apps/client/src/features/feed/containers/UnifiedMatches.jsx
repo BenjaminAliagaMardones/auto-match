@@ -34,7 +34,7 @@ export default function BuyerMatches() {
   const handleOpenChat = (match) => {
     const matchName = `${match.listing_brand} ${match.listing_model}`;
     const sellerName = match.other_user_email ? match.other_user_email.split('@')[0] : 'Vendedor';
-    navigate(`/buyer/chat/${match.id}`, { state: { matchName, sellerName } });
+    navigate(`/app/chat/${match.id}`, { state: { matchName, sellerName } });
   };
 
   return (

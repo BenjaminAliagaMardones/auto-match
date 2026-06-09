@@ -3,7 +3,7 @@ import SwipeCard from '../components/SwipeCard';
 import { useBuyerFeed } from '../hooks/useBuyerFeed';
 
 export default function BuyerFeed() {
-  const { currentCar, nextCar, handleSwipe, handleLike, handleDislike, exitDirectionRef } = useBuyerFeed();
+  const { currentCar, nextCar, handleSwipe, handleLike, handleDislike, exitDirectionRef, isLoading, error } = useBuyerFeed();
 
   return (
     <>
@@ -39,7 +39,18 @@ export default function BuyerFeed() {
 
       {/* Main Content */}
       <main className="feed-main-area">
-        {currentCar ? (
+        {isLoading ? (
+          <div className="empty-state">
+            <div className="empty-state-emoji">🔍</div>
+            <p className="empty-state-text">Cargando vehículos...</p>
+          </div>
+        ) : error ? (
+          <div className="empty-state">
+            <div className="empty-state-emoji">⚠️</div>
+            <h2 className="empty-state-title">Sin resultados</h2>
+            <p className="empty-state-text">{error}</p>
+          </div>
+        ) : currentCar ? (
           <>
             {/* Card Stack */}
             <div className="card-stack">
@@ -93,9 +104,7 @@ export default function BuyerFeed() {
           <div className="empty-state">
             <div className="empty-state-emoji">🏁</div>
             <h2 className="empty-state-title">¡Ya viste todos!</h2>
-            <p className="empty-state-text">
-              No hay más vehículos por ahora.
-            </p>
+            <p className="empty-state-text">No hay más vehículos por ahora.</p>
           </div>
         )}
       </main>

@@ -1484,3 +1484,49 @@ body {
   font-weight: 600;
 }
 
+.buyer-role-tag {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.3rem 1rem;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  color: #1565c0;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ─── New Listing Form ─── */
+.new-listing-main {
+  align-items: stretch;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background-color: var(--white);
+}
+
+.new-listing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.new-listing-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.new-listing-row .form-group {
+  flex: 1;
+}
+
+.new-listing-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.new-listing-submit {
+  margin-top: 0.75rem;
+  border-radius: var(--radius-xl);
+  text-transform: none;
+  letter-spacing: 0;
+}
+

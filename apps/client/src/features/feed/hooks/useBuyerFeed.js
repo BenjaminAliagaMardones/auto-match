@@ -1,132 +1,74 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { apiClient } from '../../../services/apiClient';
 
-// Datos de ejemplo
-const SAMPLE_CARS = [
-  {
-    id: 1,
-    make: 'TOYOTA',
-    model: 'Corolla XSE',
-    year: '2021',
-    price: 'US$ 17.500',
-    km: '42.800 km',
-    location: 'Temuco',
-    type: 'SEDÁN',
-    transmission: 'Automática',
-    match: 94,
-    viewType: 'COROLLA - 3/4 FRONTAL',
-  },
-  {
-    id: 2,
-    make: 'MAZDA',
-    model: 'CX-5 Grand Touring',
-    year: '2020',
-    price: 'US$ 22.000',
-    km: '35.000 km',
-    location: 'Padre Las Casas',
-    type: 'SUV',
-    transmission: 'Automática',
-    match: 88,
-    viewType: 'CX-5 - LATERAL',
-  },
-  {
-    id: 3,
-    make: 'FORD',
-    model: 'Mustang GT',
-    year: '2022',
-    price: 'US$ 45.000',
-    km: '15.000 km',
-    location: 'Villarrica',
-    type: 'Coupé',
-    transmission: 'Manual',
-    match: 97,
-    viewType: 'MUSTANG - 3/4 TRASERO',
-  },
-  {
-    id: 4,
-    make: 'CHEVROLET',
-    model: 'Tracker Premier',
-    year: '2023',
-    price: 'US$ 25.500',
-    km: '8.500 km',
-    location: 'Pucón',
-    type: 'SUV',
-    transmission: 'Automática',
-    match: 91,
-    viewType: 'TRACKER - FRONTAL',
-  },
-  {
-    id: 5,
-    make: 'VOLKSWAGEN',
-    model: 'Golf GTI',
-    year: '2019',
-    price: 'US$ 28.000',
-    km: '55.000 km',
-    location: 'Temuco',
-    type: 'Hatchback',
-    transmission: 'Automática (DSG)',
-    match: 85,
-    viewType: 'GOLF - PERFIL',
-  },
-  {
-    id: 6,
-    make: 'HONDA',
-    model: 'Civic EX-L',
-    year: '2021',
-    price: 'US$ 21.000',
-    km: '32.000 km',
-    location: 'Lautaro',
-    type: 'Sedán',
-    transmission: 'Automática (CVT)',
-    match: 95,
-    viewType: 'CIVIC - 3/4 FRONTAL',
-  },
-  {
-    id: 7,
-    make: 'NISSAN',
-    model: 'Frontier Pro-4X',
-    year: '2024',
-    price: 'US$ 38.000',
-    km: '2.000 km',
-    location: 'Victoria',
-    type: 'Pick-up',
-    transmission: 'Automática 4x4',
-    match: 82,
-    viewType: 'FRONTIER - 3/4 TRASERO',
-  },
-  {
-    id: 8,
-    make: 'PEUGEOT',
-    model: '208 Allure',
-    year: '2022',
-    price: 'US$ 15.500',
-    km: '28.000 km',
-    location: 'Nueva Imperial',
-    type: 'Hatchback',
-    transmission: 'Manual',
-    match: 89,
-    viewType: '208 - FRONTAL',
-  },
-];
+function toCard(item) {
+  return {
+    id: item.id,
+    make: item.brand,
+    model: item.model,
+    year: item.year ? String(item.year) : 'N/D',
+    price: `US$ ${item.price.toLocaleString('es-CL')}`,
+    type: item.vehicle_type || 'Vehículo',
+    description: item.description || '',
+    photo: item.photos?.[0]?.url || null,
+    km: null,
+    transmission: null,
+    location: null,
+    match: null,
+    viewType: null,
+  };
+}
 
 export function useBuyerFeed() {
-  const [cars, setCars] = useState(SAMPLE_CARS);
+  const [cars, setCars] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const exitDirectionRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchFeed = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await apiClient.get('feed').json();
+        if (!cancelled) setCars((res.items || []).map(toCard));
+      } catch (err) {
+        if (!cancelled) setError('No se pudo cargar el feed.');
+        console.error('Error fetching feed', err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    fetchFeed();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSwipe = useCallback((direction) => {
     exitDirectionRef.current = direction;
-    setCars((prev) => prev.slice(1));
+    setCars((prev) => {
+      const carId = prev[0]?.id;
+      if (carId) {
+        const apiDirection = direction === 'like' ? 'like' : 'pass';
+        apiClient.post('swipes', { json: { listing_id: carId, direction: apiDirection } })
+          .catch(err => console.error('Error registering swipe', err));
+      }
+      return prev.slice(1);
+    });
   }, []);
 
-  const handleLike = () => handleSwipe('like');
-  const handleDislike = () => handleSwipe('dislike');
+  const handleLike = useCallback(() => handleSwipe('like'), [handleSwipe]);
+  const handleDislike = useCallback(() => handleSwipe('dislike'), [handleSwipe]);
 
   return {
     cars,
     currentCar: cars[0],
     nextCar: cars[1],
+    isLoading,
+    error,
     handleSwipe,
     handleLike,
     handleDislike,
-    exitDirectionRef
+    exitDirectionRef,
   };
 }
