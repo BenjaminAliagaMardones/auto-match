@@ -25,7 +25,8 @@ export function useBuyerFeed() {
   const exitDirectionRef = useRef(null);
 
   useEffect(() => {
-    apiClient.get('feed')
+    apiClient
+      .get('feed')
       .json()
       .then((items) => {
         setCars(items.map(toCard));
@@ -43,7 +44,8 @@ export function useBuyerFeed() {
       const carId = prev[0]?.id;
       if (carId) {
         const apiDirection = direction === 'like' ? 'like' : 'pass';
-        apiClient.post('swipes', { json: { listing_id: carId, direction: apiDirection } })
+        apiClient
+          .post('swipes', { json: { listing_id: carId, direction: apiDirection } })
           .catch((err) => console.error('Error registrando swipe', err));
       }
       return prev.slice(1);

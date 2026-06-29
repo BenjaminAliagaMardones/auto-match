@@ -16,8 +16,8 @@ export default function RegisterPage() {
         }
       },
       onError: (err) => {
-        console.error("Falló el registro:", err);
-      }
+        console.error('Falló el registro:', err);
+      },
     });
   };
 
@@ -27,9 +27,7 @@ export default function RegisterPage() {
       <div className="auth-hero">
         <div className="auth-hero-content">
           <div className="auth-hero-logo animate-pulse-slow">🚗 AutoMatch</div>
-          <p className="auth-hero-tagline">
-            Tu próximo auto está a un swipe de distancia.
-          </p>
+          <p className="auth-hero-tagline">Tu próximo auto está a un swipe de distancia.</p>
         </div>
       </div>
 

@@ -16,8 +16,8 @@ export default function LoginPage() {
         navigate('/app/feed');
       },
       onError: (err) => {
-        console.error("Falló el login:", err);
-      }
+        console.error('Falló el login:', err);
+      },
     });
   };
 
@@ -27,9 +27,7 @@ export default function LoginPage() {
       <div className="auth-hero">
         <div className="auth-hero-content">
           <div className="auth-hero-logo animate-pulse-slow">🚗 AutoMatch</div>
-          <p className="auth-hero-tagline">
-            Desliza, conecta y encuentra tu auto perfecto.
-          </p>
+          <p className="auth-hero-tagline">Desliza, conecta y encuentra tu auto perfecto.</p>
         </div>
       </div>
 
@@ -40,15 +38,11 @@ export default function LoginPage() {
           <p className="auth-card-subtitle">Ingresa tus credenciales para continuar</p>
 
           {registeredSuccess && (
-            <div className="alert-success">
-              ¡Cuenta creada exitosamente! Ahora inicia sesión.
-            </div>
+            <div className="alert-success">¡Cuenta creada exitosamente! Ahora inicia sesión.</div>
           )}
 
           {error && (
-            <div className="alert-error">
-              Error al iniciar sesión. Verifica tus credenciales.
-            </div>
+            <div className="alert-error">Error al iniciar sesión. Verifica tus credenciales.</div>
           )}
 
           <LoginForm onSubmit={handleLogin} isLoading={isLoading} />

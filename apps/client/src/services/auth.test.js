@@ -25,7 +25,9 @@ describe('authService.login', () => {
   it('llama al endpoint correcto', async () => {
     apiClient.post.mockReturnValue(mockPost({ token: 'abc' }));
     await authService.login({ email: 'a@b.com', password: '123' });
-    expect(apiClient.post).toHaveBeenCalledWith('auth/login', { json: { email: 'a@b.com', password: '123' } });
+    expect(apiClient.post).toHaveBeenCalledWith('auth/login', {
+      json: { email: 'a@b.com', password: '123' },
+    });
   });
 
   it('guarda el token en sessionStorage cuando el servidor lo devuelve', async () => {

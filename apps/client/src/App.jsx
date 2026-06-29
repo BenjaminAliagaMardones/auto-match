@@ -23,13 +23,13 @@ function App() {
           <Route path="/app/listings" element={<UnifiedListings />} />
           <Route path="/app/matches" element={<UnifiedMatches />} />
           <Route path="/app/profile" element={<UnifiedProfile />} />
-          
+
           {/* Seller routes */}
           <Route path="/seller/listings/new" element={<NewListing />} />
         </Route>
-        
+
         <Route path="/app/chat/:id" element={<UnifiedChat />} />
-        
+
         {/* Catch-all redirect to feed */}
         <Route path="*" element={<Navigate to="/app/feed" replace />} />
       </Routes>

@@ -14,11 +14,18 @@ export default function BuyerProfile() {
     <>
       {/* Top Navigation */}
       <header className="feed-top-nav" style={{ paddingBottom: '1rem', justifyContent: 'center' }}>
-        <h1 className="feed-header-title" style={{ fontSize: '1.5rem', fontFamily: 'Inter', fontWeight: 700 }}>Perfil</h1>
+        <h1
+          className="feed-header-title"
+          style={{ fontSize: '1.5rem', fontFamily: 'Inter', fontWeight: 700 }}
+        >
+          Perfil
+        </h1>
       </header>
 
-      <main className="feed-main-area" style={{ alignItems: 'stretch', marginTop: 0, padding: '1.5rem', overflowY: 'auto' }}>
-        
+      <main
+        className="feed-main-area"
+        style={{ alignItems: 'stretch', marginTop: 0, padding: '1.5rem', overflowY: 'auto' }}
+      >
         {/* User Info */}
         <div className="profile-user-info">
           <div className="profile-avatar-large">

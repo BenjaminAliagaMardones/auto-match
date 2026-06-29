@@ -12,9 +12,33 @@ vi.mock('../../../services/apiClient', () => ({
 import { apiClient } from '../../../services/apiClient';
 
 const FEED_ITEMS = [
-  { id: 10, brand: 'Toyota', model: 'Corolla', year: 2021, price: 17500, vehicle_type: 'Sedán', photos: [{ url: 'http://img.com/1.jpg' }] },
-  { id: 11, brand: 'Mazda', model: 'CX-5', year: 2020, price: 22000, vehicle_type: 'SUV', photos: [] },
-  { id: 12, brand: 'Ford', model: 'Mustang', year: 2022, price: 45000, vehicle_type: 'Coupé', photos: null },
+  {
+    id: 10,
+    brand: 'Toyota',
+    model: 'Corolla',
+    year: 2021,
+    price: 17500,
+    vehicle_type: 'Sedán',
+    photos: [{ url: 'http://img.com/1.jpg' }],
+  },
+  {
+    id: 11,
+    brand: 'Mazda',
+    model: 'CX-5',
+    year: 2020,
+    price: 22000,
+    vehicle_type: 'SUV',
+    photos: [],
+  },
+  {
+    id: 12,
+    brand: 'Ford',
+    model: 'Mustang',
+    year: 2022,
+    price: 45000,
+    vehicle_type: 'Coupé',
+    photos: null,
+  },
 ];
 
 const mockKyGet = (data) =>

@@ -1,10 +1,10 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import App from './App.jsx'
-import './index.css'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import App from './App.jsx';
+import './index.css';
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 // Importante: No debe haber hooks aquí, solo la renderización raíz
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -13,4 +13,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <App />
     </QueryClientProvider>
   </React.StrictMode>
-)
+);

@@ -13,7 +13,7 @@ export function useSellerListings() {
           setListings(res.items);
         }
       } catch (error) {
-        console.error("Error fetching listings", error);
+        console.error('Error fetching listings', error);
       } finally {
         setIsLoading(false);
       }
@@ -24,8 +24,8 @@ export function useSellerListings() {
   return {
     listings,
     isLoading,
-    activeCount: listings.filter(l => l.status === 'active').length,
-    soldCount: listings.filter(l => l.status === 'sold').length,
-    totalCount: listings.length
+    activeCount: listings.filter((l) => l.status === 'active').length,
+    soldCount: listings.filter((l) => l.status === 'sold').length,
+    totalCount: listings.length,
   };
 }

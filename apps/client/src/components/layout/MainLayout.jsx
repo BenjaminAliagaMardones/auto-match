@@ -7,7 +7,7 @@ export default function MainLayout() {
       <div className="feed-mobile-container">
         {/* Renderiza la ruta activa (Feed, Listings, etc.) */}
         <Outlet />
-        
+
         {/* La navegación inferior siempre está presente en estas rutas */}
         <BottomNav />
       </div>

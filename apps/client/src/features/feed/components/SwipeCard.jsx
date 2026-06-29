@@ -24,11 +24,7 @@ export default function SwipeCard({ car, onSwipe, isTop, exitDirectionRef }) {
 
   if (!isTop) {
     return (
-      <motion.div
-        className="swipe-card"
-        style={{ scale: 0.95, y: 15 }}
-        initial={false}
-      >
+      <motion.div className="swipe-card" style={{ scale: 0.95, y: 15 }} initial={false}>
         <div className="swipe-card-image-area">
           <CarSilhouette />
         </div>
@@ -73,19 +69,19 @@ export default function SwipeCard({ car, onSwipe, isTop, exitDirectionRef }) {
       {/* Top Image Area */}
       <div className="swipe-card-image-area">
         <div className="swipe-card-top-tags">
-          <div className="swipe-card-view-tag">
-            {car.viewType}
-          </div>
+          <div className="swipe-card-view-tag">{car.viewType}</div>
           <div className="swipe-card-match-badge">
             <span className="swipe-card-match-number">{car.match}</span>
             <span className="swipe-card-match-text">MATCH</span>
           </div>
         </div>
-        
+
         <CarSilhouette />
 
         <div className="swipe-card-name-overlay">
-          <div className="swipe-card-make">{car.make} - <span style={{opacity: 0.8}}>{car.year}</span></div>
+          <div className="swipe-card-make">
+            {car.make} - <span style={{ opacity: 0.8 }}>{car.year}</span>
+          </div>
           <h2 className="swipe-card-model">{car.model}</h2>
         </div>
       </div>
@@ -97,7 +93,8 @@ export default function SwipeCard({ car, onSwipe, isTop, exitDirectionRef }) {
           <div className="swipe-card-type-badge">{car.type}</div>
         </div>
         <div className="swipe-card-details-text">
-          {car.km} · <span style={{textTransform: 'lowercase'}}>{car.transmission}</span><br />
+          {car.km} · <span style={{ textTransform: 'lowercase' }}>{car.transmission}</span>
+          <br />
           {car.location}
         </div>
       </div>
