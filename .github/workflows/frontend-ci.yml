@@ -81,9 +81,9 @@ jobs:
         run: npm run test:coverage
 
       - name: Análisis SonarQube
-        uses: SonarSource/sonarqube-scan-action@master
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602
         with:
           projectBaseDir: apps/client
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarqube.inf.uct.cl/
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
