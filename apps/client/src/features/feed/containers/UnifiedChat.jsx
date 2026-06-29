@@ -11,10 +11,9 @@ export default function BuyerChat() {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   
-  // Use state passed from BuyerMatches if available
-  const [info, setInfo] = useState({ 
-    name: location.state?.matchName || 'Chat', 
-    seller: location.state?.sellerName || 'Cargando...' 
+  const [info] = useState({
+    name: location.state?.matchName || 'Chat',
+    seller: location.state?.sellerName || 'Cargando...'
   });
   
   const messagesEndRef = useRef(null);

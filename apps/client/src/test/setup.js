@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 
 const storage = {};
-Object.defineProperty(global, 'sessionStorage', {
+Object.defineProperty(globalThis, 'sessionStorage', {
   value: {
     getItem: (key) => storage[key] ?? null,
     setItem: (key, value) => { storage[key] = String(value); },
