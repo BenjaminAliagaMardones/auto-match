@@ -1,28 +1,38 @@
+# Nombre de la pipeline de Integración Continua (CI) del frontend
 name: Frontend CI
 
+# Define cuándo se ejecutará esta pipeline
 on:
   push:
+    # Se ejecuta ante cualquier "push" en las ramas principales de desarrollo
     branches: [main, dev, devLiz, devBen]
+    # Filtro para que solo se dispare si cambian archivos del frontend o el propio archivo de CI
     paths:
       - 'apps/client/**'
       - '.github/workflows/frontend-ci.yml'
   pull_request:
+    # Se ejecuta también al abrir un Pull Request hacia las ramas de integración
     branches: [main, dev]
+    # Mismo filtro de directorios para evitar ejecuciones innecesarias
     paths:
       - 'apps/client/**'
 
 jobs:
+  # TRABAJO 1: Verificación de calidad de código y ejecución de pruebas
   lint-format-test:
     name: Lint, Format & Test
     runs-on: ubuntu-latest
     defaults:
       run:
+        # Configura que todas las ejecuciones (run) inicien dentro de la carpeta del frontend
         working-directory: apps/client
 
     steps:
+      # Paso 1: Clonar el código del repositorio en la máquina virtual de GitHub
       - name: Checkout código
         uses: actions/checkout@v4
 
+      # Paso 2: Instalar y configurar Node.js v20 habilitando la caché para acelerar futuras ejecuciones de npm
       - name: Configurar Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -30,41 +40,52 @@ jobs:
           cache: 'npm'
           cache-dependency-path: apps/client/package-lock.json
 
+      # Paso 3: Instalar dependencias limpiamente usando 'npm ci' (basado estrictamente en package-lock.json)
       - name: Instalar dependencias
         run: npm ci
 
+      # Paso 4: Validar errores de sintaxis y reglas del linter (ESLint)
       - name: Lint (ESLint)
         run: npm run lint
 
+      # Paso 5: Verificar que el estilo de escritura cumpla con el formateador de código (Prettier)
       - name: Format check (Prettier)
         run: npm run format:check
 
+      # Paso 6: Simular la compilación de producción para asegurar que el proyecto compila sin errores de empaquetado
       - name: Build de producción
         run: npm run build
 
+      # Paso 7: Ejecutar las pruebas unitarias y de integración (Vitest) y generar el reporte de cobertura de código
       - name: Tests con cobertura (Vitest)
         run: npm run test:coverage
 
+      # Paso 8: Guardar la carpeta de cobertura generada como un artefacto descargable en GitHub
       - name: Subir reporte de cobertura como artefacto
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() # Se ejecuta incluso si algún test falló, para poder ver qué falló
         with:
           name: coverage-report
           path: apps/client/coverage/
           retention-days: 7
 
+  # TRABAJO 2: Análisis estático de código en SonarQube
   sonarqube:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
+    # Indica que este trabajo depende de que el trabajo 'lint-format-test' haya finalizado con éxito
     needs: lint-format-test
+    # Solo corre si es un Push a 'main' o 'dev' (las ramas principales)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
 
     steps:
+      # Paso 1: Clonar el repositorio. fetch-depth: 0 es necesario para descargar todo el historial de commits para el análisis de Sonar
       - name: Checkout código
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # Paso 2: Configurar Node.js v20
       - name: Configurar Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -72,18 +93,22 @@ jobs:
           cache: 'npm'
           cache-dependency-path: apps/client/package-lock.json
 
+      # Paso 3: Instalar dependencias del frontend
       - name: Instalar dependencias
         working-directory: apps/client
         run: npm ci
 
+      # Paso 4: Volver a ejecutar los tests con cobertura para generar el archivo de reporte lcov.info que consumirá SonarQube
       - name: Generar cobertura para SonarQube
         working-directory: apps/client
         run: npm run test:coverage
 
+      # Paso 5: Enviar el código y reporte de cobertura al servidor de SonarQube de la universidad
       - name: Análisis SonarQube
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602
         with:
           projectBaseDir: apps/client
         env:
+          # Credenciales secretas configuradas en las opciones de GitHub del repositorio
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
