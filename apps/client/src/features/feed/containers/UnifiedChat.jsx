@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import useWebSocket from 'react-use-websocket';
+import ReactUseWebSocket from 'react-use-websocket';
+
+// react-use-websocket es CJS puro: según el bundler, el default import llega
+// como el hook o como el objeto del módulo. Este shim cubre ambos casos.
+const useWebSocket = ReactUseWebSocket.default ?? ReactUseWebSocket;
 import { apiClient, WS_BASE_URL } from '../../../services/apiClient';
 import { useAuth } from '../../../hooks/useAuth';
 
@@ -27,20 +31,19 @@ export default function BuyerChat() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
+        // El backend responde { items, count } con campos en snake_case
         const history = await apiClient.get(`matches/${id}/messages`).json();
-        if (history) {
-          setMessages(
-            history.map((m) => ({
-              id: m.id,
-              text: m.body || m.text, // dependiendo del backend struct
-              senderId: m.senderId || m.SenderID,
-              time: new Date(m.createdAt || m.CreatedAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-            }))
-          );
-        }
+        setMessages(
+          (history.items ?? []).map((m) => ({
+            id: m.id,
+            text: m.body,
+            senderId: m.sender_id,
+            time: new Date(m.created_at).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          }))
+        );
       } catch (error) {
         console.error('Error cargando historial', error);
       }

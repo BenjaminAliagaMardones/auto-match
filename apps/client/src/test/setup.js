@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom';
 
+// jsdom no implementa scrollIntoView (usado por el chat)
+Element.prototype.scrollIntoView = Element.prototype.scrollIntoView || (() => {});
+
 const storage = {};
 Object.defineProperty(globalThis, 'sessionStorage', {
   value: {

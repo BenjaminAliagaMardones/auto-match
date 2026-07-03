@@ -1,5 +1,18 @@
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 
+// Foto del listing; cae a la silueta SVG cuando el listing no tiene foto.
+const CarPhoto = ({ car }) =>
+  car.photo ? (
+    <img
+      src={car.photo}
+      alt={`${car.make} ${car.model}`}
+      className="swipe-card-photo"
+      draggable={false}
+    />
+  ) : (
+    <CarSilhouette />
+  );
+
 // SVG Car Placeholder
 const CarSilhouette = () => (
   <svg viewBox="0 0 200 100" className="swipe-card-car-shape" fill="currentColor">
@@ -26,7 +39,7 @@ export default function SwipeCard({ car, onSwipe, isTop, exitDirectionRef }) {
     return (
       <motion.div className="swipe-card" style={{ scale: 0.95, y: 15 }} initial={false}>
         <div className="swipe-card-image-area">
-          <CarSilhouette />
+          <CarPhoto car={car} />
         </div>
         <div className="swipe-card-info-panel">
           <h3 className="swipe-card-model">{car.model}</h3>
@@ -76,7 +89,7 @@ export default function SwipeCard({ car, onSwipe, isTop, exitDirectionRef }) {
           </div>
         </div>
 
-        <CarSilhouette />
+        <CarPhoto car={car} />
 
         <div className="swipe-card-name-overlay">
           <div className="swipe-card-make">

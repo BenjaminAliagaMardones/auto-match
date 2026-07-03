@@ -447,6 +447,16 @@ body {
   opacity: 0.2;
 }
 
+.swipe-card-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 .swipe-card-top-tags {
   position: absolute;
   top: 1.5rem;
