@@ -61,6 +61,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Devuelve los datos del usuario dueño del token.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Usuario autenticado",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/register": {
             "post": {
                 "description": "Crea una cuenta nueva (rol: buyer o seller).",
@@ -759,6 +790,61 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/uploads/images": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sube una imagen (jpeg/png/webp, máx 5MB) y devuelve su URL pública para usar en photo_urls.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "uploads"
+                ],
+                "summary": "Subir imagen al bucket",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Archivo de imagen",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UploadImageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    },
+                    "413": {
+                        "description": "Imagen supera los 5MB",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -916,7 +1002,16 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "listing_brand": {
+                    "type": "string"
+                },
                 "listing_id": {
+                    "type": "string"
+                },
+                "listing_model": {
+                    "type": "string"
+                },
+                "other_user_email": {
                     "type": "string"
                 }
             }
@@ -1102,6 +1197,14 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "vehicle_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UploadImageResponse": {
+            "type": "object",
+            "properties": {
+                "url": {
                     "type": "string"
                 }
             }

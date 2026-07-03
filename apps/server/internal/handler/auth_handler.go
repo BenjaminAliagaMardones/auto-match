@@ -6,6 +6,7 @@ import (
 
 	"github.com/BenjaminAliagaMardones/automatch/internal/domain"
 	"github.com/BenjaminAliagaMardones/automatch/internal/handler/dto"
+	"github.com/BenjaminAliagaMardones/automatch/internal/middleware"
 	"github.com/BenjaminAliagaMardones/automatch/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -83,6 +84,29 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, dto.LoginResponse{Token: token, User: toUserResponse(u)})
+}
+
+// Me godoc
+// @Summary      Usuario autenticado
+// @Description  Devuelve los datos del usuario dueño del token.
+// @Tags         auth
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  dto.UserResponse
+// @Failure      401  {object}  dto.ErrorResponse
+// @Router       /auth/me [get]
+func (h *AuthHandler) Me(c *gin.Context) {
+	userID, ok := middleware.UserIDFrom(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "no autenticado"})
+		return
+	}
+	u, err := h.auth.Me(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "error interno"})
+		return
+	}
+	c.JSON(http.StatusOK, toUserResponse(u))
 }
 
 func toUserResponse(u *domain.User) dto.UserResponse {

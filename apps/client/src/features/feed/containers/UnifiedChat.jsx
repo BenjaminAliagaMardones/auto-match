@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import useWebSocket from 'react-use-websocket';
-import { apiClient } from '../../../services/apiClient';
-import { useAuthStore } from '../../../hooks/useAuth';
+import { apiClient, WS_BASE_URL } from '../../../services/apiClient';
+import { useAuth } from '../../../hooks/useAuth';
 
 export default function BuyerChat() {
   const { id } = useParams();
@@ -18,10 +18,10 @@ export default function BuyerChat() {
 
   const messagesEndRef = useRef(null);
 
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   const token = sessionStorage.getItem('auth-token');
-  const WS_URL = token ? `ws://localhost:8080/api/v1/ws/chat?token=${token}` : null;
+  const WS_URL = token ? `${WS_BASE_URL}/ws/chat?token=${token}` : null;
 
   // Cargar historial de mensajes al montar
   useEffect(() => {
@@ -98,7 +98,7 @@ export default function BuyerChat() {
       <div className="feed-mobile-container" style={{ backgroundColor: 'var(--cream-dark)' }}>
         {/* Chat Header */}
         <header className="chat-header">
-          <button className="chat-back-btn" onClick={() => navigate('/buyer/matches')}>
+          <button className="chat-back-btn" onClick={() => navigate('/app/matches')}>
             <svg
               width="24"
               height="24"

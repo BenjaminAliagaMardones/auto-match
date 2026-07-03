@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../../services/apiClient';
+import { uploadImage, MAX_IMAGE_SIZE } from '../../../services/uploads';
 
 export default function NewListing() {
   const navigate = useNavigate();
@@ -15,20 +16,50 @@ export default function NewListing() {
     price: '',
     vehicle_type: 'SEDÁN',
     description: '',
-    photo_url: '', // We will convert this to an array for the API
   });
+  const [photoFiles, setPhotoFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFilesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    // Liberar las previews anteriores antes de generar las nuevas
+    previews.forEach((u) => URL.revokeObjectURL(u));
+
+    const tooBig = files.find((f) => f.size > MAX_IMAGE_SIZE);
+    if (tooBig) {
+      setError(`"${tooBig.name}" supera los 5MB permitidos.`);
+      e.target.value = '';
+      setPhotoFiles([]);
+      setPreviews([]);
+      return;
+    }
+    setError(null);
+    setPhotoFiles(files);
+    setPreviews(files.map((f) => URL.createObjectURL(f)));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (photoFiles.length === 0) {
+      setError('Selecciona al menos una foto del vehículo.');
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
 
     try {
+      // 1. Subir las fotos al bucket y obtener sus URLs públicas
+      const photoUrls = [];
+      for (const file of photoFiles) {
+        photoUrls.push(await uploadImage(file));
+      }
+
+      // 2. Crear el listing con las URLs del bucket
       const payload = {
         brand: formData.brand,
         model: formData.model,
@@ -36,7 +67,7 @@ export default function NewListing() {
         price: parseInt(formData.price, 10),
         vehicle_type: formData.vehicle_type,
         description: formData.description,
-        photo_urls: formData.photo_url ? [formData.photo_url] : [],
+        photo_urls: photoUrls,
       };
 
       await apiClient.post('listings', { json: payload }).json();
@@ -208,19 +239,36 @@ export default function NewListing() {
             className="form-group"
             style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
           >
-            <label htmlFor="photo_url" style={{ fontWeight: 600, fontSize: '0.9rem' }}>
-              URL de la Foto *
+            <label htmlFor="photos" style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+              Fotos * (jpeg, png o webp — máx 5MB c/u)
             </label>
             <input
-              type="url"
-              id="photo_url"
-              name="photo_url"
-              value={formData.photo_url}
-              onChange={handleChange}
-              required
-              placeholder="https://ejemplo.com/mifoto.jpg"
+              type="file"
+              id="photos"
+              name="photos"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={handleFilesChange}
               style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc' }}
             />
+            {previews.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {previews.map((src) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt="Vista previa"
+                    style={{
+                      width: '80px',
+                      height: '80px',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      border: '1px solid #ccc',
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           <div
@@ -262,7 +310,7 @@ export default function NewListing() {
               opacity: isSubmitting ? 0.7 : 1,
             }}
           >
-            {isSubmitting ? 'Publicando...' : 'Publicar Auto'}
+            {isSubmitting ? 'Subiendo fotos y publicando...' : 'Publicar Auto'}
           </button>
         </form>
       </main>

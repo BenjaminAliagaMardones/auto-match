@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { create } from 'zustand';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authService } from '../services/auth';
@@ -32,9 +33,16 @@ export function useAuth() {
     queryKey: ['me'],
     queryFn: authService.me,
     enabled: !!sessionStorage.getItem('auth-token') && !user,
-    onSuccess: (data) => setUser(data),
     retry: false,
   });
+
+  // TanStack Query v5 eliminó onSuccess en useQuery: sincronizamos el
+  // usuario recuperado (tras un refresh de página) vía efecto.
+  useEffect(() => {
+    if (profileQuery.data && !user) {
+      setUser(profileQuery.data);
+    }
+  }, [profileQuery.data, user, setUser]);
 
   const logout = () => {
     authService.logout();

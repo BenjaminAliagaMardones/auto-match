@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/BenjaminAliagaMardones/automatch/internal/service"
 	"github.com/BenjaminAliagaMardones/automatch/internal/shared/config"
 	"github.com/BenjaminAliagaMardones/automatch/internal/shared/db"
+	"github.com/BenjaminAliagaMardones/automatch/internal/storage"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -47,6 +49,18 @@ func main() {
 	hasher := auth.NewBcryptHasher(bcrypt.DefaultCost)
 	jwtIssuer := auth.NewJWTIssuer(cfg.JWTSecret, 24*time.Hour)
 
+	objectStore, err := storage.NewMinioStorage(context.Background(), storage.MinioConfig{
+		Endpoint:  cfg.S3Endpoint,
+		AccessKey: cfg.S3AccessKey,
+		SecretKey: cfg.S3SecretKey,
+		Bucket:    cfg.S3Bucket,
+		UseSSL:    cfg.S3UseSSL,
+		PublicURL: cfg.S3PublicURL,
+	})
+	if err != nil {
+		log.Fatalf("storage: %v", err)
+	}
+
 	userRepo := repository.NewPostgresUserRepository(conn)
 	profileRepo := repository.NewPostgresProfileRepository(conn)
 	listingRepo := repository.NewPostgresListingRepository(conn)
@@ -65,6 +79,7 @@ func main() {
 	listingHandler := handler.NewListingHandler(listingService)
 	feedHandler := handler.NewFeedHandler(feedService)
 	matchHandler := handler.NewMatchHandler(matchService)
+	uploadHandler := handler.NewUploadHandler(objectStore)
 
 	chatHub := service.NewChatHub(matchService)
 	go chatHub.Run()
@@ -100,6 +115,8 @@ func main() {
 		protected := api.Group("/")
 		protected.Use(middleware.JWTAuth(jwtIssuer))
 		{
+			protected.GET("/auth/me", authHandler.Me)
+
 			protected.GET("/profile/me", profileHandler.GetMe)
 			protected.PUT("/profile/me", profileHandler.UpdateMe)
 
@@ -107,6 +124,8 @@ func main() {
 			protected.GET("/listings/me", listingHandler.ListMine)
 			protected.PATCH("/listings/:id", listingHandler.Update)
 			protected.DELETE("/listings/:id", listingHandler.Delete)
+
+			protected.POST("/uploads/images", uploadHandler.UploadImage)
 
 			protected.GET("/feed", feedHandler.Get)
 			protected.POST("/swipes", matchHandler.Swipe)

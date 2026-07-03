@@ -16,6 +16,23 @@ services:
       timeout: 5s
       retries: 10
 
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: automatch
+      MINIO_ROOT_PASSWORD: automatch-secret
+    ports:
+      - "9000:9000" # API S3 (las URLs públicas de las imágenes apuntan aquí)
+      - "9001:9001" # Consola web
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   server:
     build:
       context: ./apps/server
@@ -23,12 +40,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://automatch:automatch@postgres:5432/automatch?sslmode=disable
       JWT_SECRET: dev-secret-change-me
       PORT: "8080"
+      S3_ENDPOINT: minio:9000
+      S3_ACCESS_KEY: automatch
+      S3_SECRET_KEY: automatch-secret
+      S3_BUCKET: automatch
+      S3_USE_SSL: "false"
+      S3_PUBLIC_URL: http://localhost:9000
     ports:
       - "8080:8080"
 
 volumes:
   pgdata:
+  miniodata:

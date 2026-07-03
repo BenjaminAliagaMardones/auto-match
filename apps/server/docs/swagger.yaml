@@ -102,7 +102,13 @@ definitions:
         type: string
       id:
         type: string
+      listing_brand:
+        type: string
       listing_id:
+        type: string
+      listing_model:
+        type: string
+      other_user_email:
         type: string
     type: object
   github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.MessageListResponse:
@@ -228,6 +234,11 @@ definitions:
       vehicle_type:
         type: string
     type: object
+  github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UploadImageResponse:
+    properties:
+      url:
+        type: string
+    type: object
   github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UserResponse:
     properties:
       created_at:
@@ -276,6 +287,25 @@ paths:
           schema:
             $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
       summary: Login
+      tags:
+      - auth
+  /auth/me:
+    get:
+      description: Devuelve los datos del usuario dueño del token.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Usuario autenticado
       tags:
       - auth
   /auth/register:
@@ -727,6 +757,42 @@ paths:
       summary: Registrar swipe (like / pass)
       tags:
       - feed
+  /uploads/images:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Sube una imagen (jpeg/png/webp, máx 5MB) y devuelve su URL pública
+        para usar en photo_urls.
+      parameters:
+      - description: Archivo de imagen
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.UploadImageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+        "413":
+          description: Imagen supera los 5MB
+          schema:
+            $ref: '#/definitions/github_com_BenjaminAliagaMardones_automatch_internal_handler_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Subir imagen al bucket
+      tags:
+      - uploads
 schemes:
 - http
 securityDefinitions:

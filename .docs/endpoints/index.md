@@ -8,6 +8,7 @@ Base URL: `http://localhost:8080/api/v1`
 | Listings | [listings.md](listings.md) | placeholder (otro integrante) |
 | Feed / Swipe | [feed.md](feed.md) | placeholder (otro integrante) |
 | Match + Chat | [match.md](match.md) | placeholder (otro integrante) |
+| Uploads + WebSocket | [uploads.md](uploads.md) | implementado |
 
 ## Autenticación
 

@@ -7,6 +7,7 @@ import (
 	"github.com/BenjaminAliagaMardones/automatch/internal/auth"
 	"github.com/BenjaminAliagaMardones/automatch/internal/domain"
 	"github.com/BenjaminAliagaMardones/automatch/internal/repository"
+	"github.com/google/uuid"
 )
 
 var (
@@ -53,6 +54,11 @@ func (s *AuthService) Register(ctx context.Context, in RegisterInput) (*domain.U
 		return nil, err
 	}
 	return u, nil
+}
+
+// Me devuelve el usuario autenticado a partir de su ID (extraído del JWT).
+func (s *AuthService) Me(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+	return s.users.FindByID(ctx, userID)
 }
 
 func (s *AuthService) Login(ctx context.Context, email, password string) (token string, user *domain.User, err error) {

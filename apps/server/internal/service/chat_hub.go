@@ -68,7 +68,9 @@ func (h *ChatHub) Run() {
 				continue
 			}
 
-			h.mu.RLock()
+			// Lock de escritura: si un cliente tiene el buffer lleno se
+			// desconecta aquí mismo (close + delete mutan el mapa).
+			h.mu.Lock()
 			for _, participantID := range participants {
 				if connections, ok := h.clients[participantID]; ok {
 					for client := range connections {
@@ -79,9 +81,12 @@ func (h *ChatHub) Run() {
 							delete(connections, client)
 						}
 					}
+					if len(connections) == 0 {
+						delete(h.clients, participantID)
+					}
 				}
 			}
-			h.mu.RUnlock()
+			h.mu.Unlock()
 		}
 	}
 }

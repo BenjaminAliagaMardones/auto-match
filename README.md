@@ -21,12 +21,13 @@ Proyecto universitario · **Diseño de Software** · UCT 2026.
 ## Cómo levantarlo
 
 ```bash
-make up                  # backend + postgres
+make up                  # backend + postgres + minio (bucket de imágenes)
 cd apps/client && npm install && npm run dev   # frontend
 ```
 
 -  API → http://localhost:8080
 -  Swagger → http://localhost:8080/swagger/index.html
+-  MinIO (bucket de imágenes) → http://localhost:9001 (consola, user/pass: `automatch` / `automatch-secret`)
 -  Frontend → http://localhost:3000
 
 ## Estructura
