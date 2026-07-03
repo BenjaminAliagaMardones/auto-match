@@ -49,7 +49,7 @@ const mockKyPost = (data = {}) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  apiClient.get.mockReturnValue(mockKyGet(FEED_ITEMS));
+  apiClient.get.mockReturnValue(mockKyGet({ items: FEED_ITEMS, count: FEED_ITEMS.length }));
   apiClient.post.mockReturnValue(mockKyPost({}));
 });
 

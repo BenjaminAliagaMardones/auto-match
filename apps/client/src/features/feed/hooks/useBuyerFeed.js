@@ -28,8 +28,9 @@ export function useBuyerFeed() {
     apiClient
       .get('feed')
       .json()
-      .then((items) => {
-        setCars(items.map(toCard));
+      .then((res) => {
+        // El backend responde { items, count }
+        setCars((res.items ?? []).map(toCard));
         setIsLoading(false);
       })
       .catch((err) => {
