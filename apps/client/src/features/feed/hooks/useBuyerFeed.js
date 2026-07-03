@@ -10,11 +10,7 @@ function toCard(item) {
     price: `US$ ${item.price.toLocaleString('es-CL')}`,
     type: item.vehicle_type || 'Vehículo',
     photo: item.photos?.[0]?.url ?? null,
-    km: null,
-    transmission: null,
-    location: null,
-    match: null,
-    viewType: null,
+    description: item.description || '',
   };
 }
 
@@ -22,6 +18,8 @@ export function useBuyerFeed() {
   const [cars, setCars] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Match recién creado tras un like: { matchId, car } o null
+  const [newMatch, setNewMatch] = useState(null);
   const exitDirectionRef = useRef(null);
 
   useEffect(() => {
@@ -42,16 +40,25 @@ export function useBuyerFeed() {
   const handleSwipe = useCallback((direction) => {
     exitDirectionRef.current = direction;
     setCars((prev) => {
-      const carId = prev[0]?.id;
-      if (carId) {
+      const car = prev[0];
+      if (car) {
         const apiDirection = direction === 'like' ? 'like' : 'pass';
         apiClient
-          .post('swipes', { json: { listing_id: carId, direction: apiDirection } })
+          .post('swipes', { json: { listing_id: car.id, direction: apiDirection } })
+          .json()
+          .then((res) => {
+            // Celebrar el match recién creado (FR-19)
+            if (res.match_created && res.match) {
+              setNewMatch({ matchId: res.match.id, car });
+            }
+          })
           .catch((err) => console.error('Error registrando swipe', err));
       }
       return prev.slice(1);
     });
   }, []);
+
+  const dismissMatch = useCallback(() => setNewMatch(null), []);
 
   const handleLike = useCallback(() => handleSwipe('like'), [handleSwipe]);
   const handleDislike = useCallback(() => handleSwipe('dislike'), [handleSwipe]);
@@ -62,6 +69,8 @@ export function useBuyerFeed() {
     nextCar: cars[1],
     isLoading,
     error,
+    newMatch,
+    dismissMatch,
     handleSwipe,
     handleLike,
     handleDislike,

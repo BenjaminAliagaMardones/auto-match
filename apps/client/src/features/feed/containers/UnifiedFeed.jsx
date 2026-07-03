@@ -1,10 +1,30 @@
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import SwipeCard from '../components/SwipeCard';
 import { useBuyerFeed } from '../hooks/useBuyerFeed';
 
 export default function BuyerFeed() {
-  const { currentCar, nextCar, handleSwipe, handleLike, handleDislike, exitDirectionRef } =
-    useBuyerFeed();
+  const navigate = useNavigate();
+  const {
+    currentCar,
+    nextCar,
+    isLoading,
+    error,
+    newMatch,
+    dismissMatch,
+    handleSwipe,
+    handleLike,
+    handleDislike,
+    exitDirectionRef,
+  } = useBuyerFeed();
+
+  const openMatchChat = () => {
+    const { matchId, car } = newMatch;
+    dismissMatch();
+    navigate(`/app/chat/${matchId}`, {
+      state: { matchName: `${car.make} ${car.model}` },
+    });
+  };
 
   return (
     <>
@@ -12,55 +32,31 @@ export default function BuyerFeed() {
       <header className="feed-top-nav">
         <div className="feed-location-info">
           <span className="feed-location-text">AUTOMATCH · TEMUCO</span>
-          <span className="feed-location-text" style={{ opacity: 0.6 }}>
-            +150KM
-          </span>
           <h1 className="feed-header-title">
             Tu <span className="feed-header-title-italic">match</span> de
             <br />
             hoy
           </h1>
         </div>
-        <button className="feed-filter-btn" aria-label="Filters">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="4" y1="21" x2="4" y2="14"></line>
-            <line x1="4" y1="10" x2="4" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12" y2="3"></line>
-            <line x1="20" y1="21" x2="20" y2="16"></line>
-            <line x1="20" y1="12" x2="20" y2="3"></line>
-            <line x1="1" y1="14" x2="7" y2="14"></line>
-            <line x1="9" y1="8" x2="15" y2="8"></line>
-            <line x1="17" y1="16" x2="23" y2="16"></line>
-          </svg>
-        </button>
       </header>
-
-      {/* Visual Filter Tags */}
-      <div className="feed-filter-tags">
-        <span className="feed-filter-tag">PRECIO</span>
-        <span className="feed-filter-tag">KM</span>
-        <span className="feed-filter-tag">AÑO</span>
-        <span
-          className="feed-filter-tag"
-          style={{ borderBottom: '2px solid var(--charcoal)', paddingBottom: '4px' }}
-        >
-          SEDÁN
-        </span>
-      </div>
 
       {/* Main Content */}
       <main className="feed-main-area">
-        {currentCar ? (
+        {isLoading ? (
+          <div className="empty-state">
+            <div className="feed-spinner" aria-label="Cargando" />
+            <p className="empty-state-text">Buscando autos para ti…</p>
+          </div>
+        ) : error ? (
+          <div className="empty-state">
+            <div className="empty-state-emoji">😕</div>
+            <h2 className="empty-state-title">No pudimos cargar el feed</h2>
+            <p className="empty-state-text">Revisa tu conexión e intenta de nuevo.</p>
+            <button className="feed-retry-btn" onClick={() => window.location.reload()}>
+              Reintentar
+            </button>
+          </div>
+        ) : currentCar ? (
           <>
             {/* Card Stack */}
             <div className="card-stack">
@@ -84,28 +80,22 @@ export default function BuyerFeed() {
             <div className="action-buttons-container">
               <div className="action-buttons-row">
                 <div className="action-btn-wrapper">
-                  <button className="action-btn action-btn-dislike" onClick={handleDislike}>
+                  <button
+                    className="action-btn action-btn-dislike"
+                    onClick={handleDislike}
+                    aria-label="Descartar"
+                  >
                     ✕
                   </button>
                   <span className="action-btn-label">DESCARTAR</span>
                 </div>
 
-                <div className="action-btn-wrapper" style={{ marginTop: '10px' }}>
-                  <button className="action-btn action-btn-info" onClick={() => {}}>
-                    i
-                  </button>
-                  <span className="action-btn-label">DETALLE</span>
-                </div>
-
-                <div className="action-btn-wrapper" style={{ marginTop: '10px' }}>
-                  <button className="action-btn action-btn-super" onClick={() => {}}>
-                    ★
-                  </button>
-                  <span className="action-btn-label">SÚPER</span>
-                </div>
-
                 <div className="action-btn-wrapper">
-                  <button className="action-btn action-btn-like" onClick={handleLike}>
+                  <button
+                    className="action-btn action-btn-like"
+                    onClick={handleLike}
+                    aria-label="Me gusta"
+                  >
                     ♥
                   </button>
                   <span className="action-btn-label" style={{ marginTop: '-2px' }}>
@@ -123,6 +113,50 @@ export default function BuyerFeed() {
           </div>
         )}
       </main>
+
+      {/* Overlay de match nuevo */}
+      <AnimatePresence>
+        {newMatch && (
+          <motion.div
+            className="match-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            role="dialog"
+            aria-label="Nuevo match"
+          >
+            <motion.div
+              className="match-overlay-card"
+              initial={{ scale: 0.8, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+            >
+              {newMatch.car.photo && (
+                <img
+                  className="match-overlay-photo"
+                  src={newMatch.car.photo}
+                  alt=""
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              )}
+              <h2 className="match-overlay-title">¡Es un match!</h2>
+              <p className="match-overlay-text">
+                Al vendedor de <strong>{`${newMatch.car.make} ${newMatch.car.model}`}</strong> le
+                interesa hablar contigo.
+              </p>
+              <button className="match-overlay-cta" onClick={openMatchChat}>
+                Enviar mensaje
+              </button>
+              <button className="match-overlay-dismiss" onClick={dismissMatch}>
+                Seguir explorando
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

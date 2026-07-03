@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -42,8 +43,18 @@ func NewUploadHandler(store storage.ObjectStorage) *UploadHandler {
 // @Failure      413  {object}  dto.ErrorResponse  "Imagen supera los 5MB"
 // @Router       /uploads/images [post]
 func (h *UploadHandler) UploadImage(c *gin.Context) {
+	// Cortar el body ANTES de parsear el multipart: sin esto, FormFile
+	// consume el upload completo (p.ej. 2GB) antes de poder rechazarlo.
+	// Margen extra para los headers del multipart.
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxImageSize+(64<<10))
+
 	fileHeader, err := c.FormFile("image")
 	if err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			c.JSON(http.StatusRequestEntityTooLarge, dto.ErrorResponse{Error: "la imagen no puede superar los 5MB"})
+			return
+		}
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "se requiere el campo 'image' (multipart/form-data)"})
 		return
 	}

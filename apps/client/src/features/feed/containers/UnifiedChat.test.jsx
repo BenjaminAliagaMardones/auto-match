@@ -11,6 +11,12 @@ vi.mock('../../../services/apiClient', () => ({
   },
 }));
 
+// Sin este mock el hook abriría un WebSocket real (flaky en CI y
+// dependiente de que el backend local esté corriendo).
+vi.mock('react-use-websocket', () => ({
+  default: vi.fn(() => ({ sendMessage: vi.fn() })),
+}));
+
 import { apiClient } from '../../../services/apiClient';
 import UnifiedChat from './UnifiedChat';
 

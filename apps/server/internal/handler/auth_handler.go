@@ -7,6 +7,7 @@ import (
 	"github.com/BenjaminAliagaMardones/automatch/internal/domain"
 	"github.com/BenjaminAliagaMardones/automatch/internal/handler/dto"
 	"github.com/BenjaminAliagaMardones/automatch/internal/middleware"
+	"github.com/BenjaminAliagaMardones/automatch/internal/repository"
 	"github.com/BenjaminAliagaMardones/automatch/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -103,6 +104,12 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	}
 	u, err := h.auth.Me(c.Request.Context(), userID)
 	if err != nil {
+		// Token válido pero el usuario ya no existe (cuenta borrada, BD
+		// reseedeada): 401 para que el cliente descarte el token.
+		if errors.Is(err, repository.ErrNotFound) {
+			c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "usuario no existe"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "error interno"})
 		return
 	}

@@ -49,7 +49,10 @@ func main() {
 	hasher := auth.NewBcryptHasher(bcrypt.DefaultCost)
 	jwtIssuer := auth.NewJWTIssuer(cfg.JWTSecret, 24*time.Hour)
 
-	objectStore, err := storage.NewMinioStorage(context.Background(), storage.MinioConfig{
+	// Timeout corto: si MinIO no responde, fallar rápido con un mensaje
+	// claro en vez de colgar el arranque indefinidamente.
+	storageCtx, cancelStorage := context.WithTimeout(context.Background(), 15*time.Second)
+	objectStore, err := storage.NewMinioStorage(storageCtx, storage.MinioConfig{
 		Endpoint:  cfg.S3Endpoint,
 		AccessKey: cfg.S3AccessKey,
 		SecretKey: cfg.S3SecretKey,
@@ -57,8 +60,9 @@ func main() {
 		UseSSL:    cfg.S3UseSSL,
 		PublicURL: cfg.S3PublicURL,
 	})
+	cancelStorage()
 	if err != nil {
-		log.Fatalf("storage: %v", err)
+		log.Fatalf("storage: %v (¿está corriendo MinIO? ver compose.yml / variables S3_*)", err)
 	}
 
 	userRepo := repository.NewPostgresUserRepository(conn)

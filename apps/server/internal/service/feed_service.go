@@ -50,6 +50,9 @@ func (s *FeedService) Build(ctx context.Context, buyerID uuid.UUID, limit, offse
 	f := domain.ListingFilter{
 		Status:          &active,
 		ExcludeSwipedBy: &buyerID,
+		// El usuario no debe ver sus propias publicaciones: no puede
+		// swipearlas y bloquearían el feed.
+		ExcludeSellerID: &buyerID,
 		Limit:           limit,
 		Offset:          offset,
 	}

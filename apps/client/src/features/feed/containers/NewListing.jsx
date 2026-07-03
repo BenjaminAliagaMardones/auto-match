@@ -27,20 +27,23 @@ export default function NewListing() {
 
   const handleFilesChange = (e) => {
     const files = Array.from(e.target.files || []);
-    // Liberar las previews anteriores antes de generar las nuevas
-    previews.forEach((u) => URL.revokeObjectURL(u));
+    e.target.value = ''; // permitir volver a elegir el mismo archivo
 
     const tooBig = files.find((f) => f.size > MAX_IMAGE_SIZE);
     if (tooBig) {
       setError(`"${tooBig.name}" supera los 5MB permitidos.`);
-      e.target.value = '';
-      setPhotoFiles([]);
-      setPreviews([]);
       return;
     }
     setError(null);
-    setPhotoFiles(files);
-    setPreviews(files.map((f) => URL.createObjectURL(f)));
+    // Agregar a las ya seleccionadas (no reemplazar)
+    setPhotoFiles((prev) => [...prev, ...files]);
+    setPreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+  };
+
+  const removePhoto = (index) => {
+    URL.revokeObjectURL(previews[index]);
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -53,11 +56,8 @@ export default function NewListing() {
     setError(null);
 
     try {
-      // 1. Subir las fotos al bucket y obtener sus URLs públicas
-      const photoUrls = [];
-      for (const file of photoFiles) {
-        photoUrls.push(await uploadImage(file));
-      }
+      // 1. Subir las fotos al bucket en paralelo y obtener sus URLs públicas
+      const photoUrls = await Promise.all(photoFiles.map(uploadImage));
 
       // 2. Crear el listing con las URLs del bucket
       const payload = {
@@ -239,36 +239,37 @@ export default function NewListing() {
             className="form-group"
             style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
           >
-            <label htmlFor="photos" style={{ fontWeight: 600, fontSize: '0.9rem' }}>
-              Fotos * (jpeg, png o webp — máx 5MB c/u)
-            </label>
-            <input
-              type="file"
-              id="photos"
-              name="photos"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              onChange={handleFilesChange}
-              style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc' }}
-            />
-            {previews.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {previews.map((src) => (
-                  <img
-                    key={src}
-                    src={src}
-                    alt="Vista previa"
-                    style={{
-                      width: '80px',
-                      height: '80px',
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                      border: '1px solid #ccc',
-                    }}
-                  />
-                ))}
-              </div>
-            )}
+            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+              Fotos * <span style={{ fontWeight: 400, color: '#888' }}>(jpeg, png o webp — máx 5MB c/u)</span>
+            </span>
+            <div className="photo-grid">
+              {previews.map((src, i) => (
+                <div key={src} className="photo-thumb">
+                  <img src={src} alt={`Foto ${i + 1}`} />
+                  <button
+                    type="button"
+                    className="photo-thumb-remove"
+                    onClick={() => removePhoto(i)}
+                    aria-label={`Quitar foto ${i + 1}`}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <label htmlFor="photos" className="photo-add-tile">
+                <span className="photo-add-plus">＋</span>
+                <span>Agregar</span>
+                <input
+                  type="file"
+                  id="photos"
+                  name="photos"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={handleFilesChange}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
           </div>
 
           <div

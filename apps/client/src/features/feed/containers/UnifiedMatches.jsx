@@ -44,25 +44,6 @@ export default function BuyerMatches() {
             Matches
           </h1>
         </div>
-        <button
-          className="feed-filter-btn"
-          aria-label="Search"
-          style={{ border: 'none', background: 'var(--cream-dark)' }}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--charcoal)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-        </button>
       </header>
 
       <main

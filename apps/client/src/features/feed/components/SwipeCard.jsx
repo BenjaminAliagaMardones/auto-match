@@ -1,17 +1,20 @@
+import { useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 
-// Foto del listing; cae a la silueta SVG cuando el listing no tiene foto.
-const CarPhoto = ({ car }) =>
-  car.photo ? (
+// Foto del listing; cae a la silueta SVG cuando no hay foto o la URL falla.
+const CarPhoto = ({ car }) => {
+  const [failed, setFailed] = useState(false);
+  if (!car.photo || failed) return <CarSilhouette />;
+  return (
     <img
       src={car.photo}
       alt={`${car.make} ${car.model}`}
       className="swipe-card-photo"
       draggable={false}
+      onError={() => setFailed(true)}
     />
-  ) : (
-    <CarSilhouette />
   );
+};
 
 // SVG Car Placeholder
 const CarSilhouette = () => (
@@ -79,16 +82,8 @@ export default function SwipeCard({ car, onSwipe, isTop, exitDirectionRef }) {
         <span className="swipe-overlay-text">NOPE</span>
       </motion.div>
 
-      {/* Top Image Area */}
+      {/* Top Image Area (la foto va primero para quedar detrás de los tags) */}
       <div className="swipe-card-image-area">
-        <div className="swipe-card-top-tags">
-          <div className="swipe-card-view-tag">{car.viewType}</div>
-          <div className="swipe-card-match-badge">
-            <span className="swipe-card-match-number">{car.match}</span>
-            <span className="swipe-card-match-text">MATCH</span>
-          </div>
-        </div>
-
         <CarPhoto car={car} />
 
         <div className="swipe-card-name-overlay">
@@ -105,11 +100,7 @@ export default function SwipeCard({ car, onSwipe, isTop, exitDirectionRef }) {
           <div className="swipe-card-price">{car.price}</div>
           <div className="swipe-card-type-badge">{car.type}</div>
         </div>
-        <div className="swipe-card-details-text">
-          {car.km} · <span style={{ textTransform: 'lowercase' }}>{car.transmission}</span>
-          <br />
-          {car.location}
-        </div>
+        {car.description && <div className="swipe-card-details-text">{car.description}</div>}
       </div>
     </motion.div>
   );

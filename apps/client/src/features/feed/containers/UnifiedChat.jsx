@@ -15,10 +15,29 @@ export default function BuyerChat() {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
 
-  const [info] = useState({
+  const [info, setInfo] = useState({
     name: location.state?.matchName || 'Chat',
-    seller: location.state?.sellerName || 'Cargando...',
+    seller: location.state?.sellerName || '',
   });
+
+  // Si se entra directo por URL (o tras un refresh) no hay location.state:
+  // recuperar el nombre del auto y del otro usuario desde /matches.
+  useEffect(() => {
+    if (location.state?.matchName) return;
+    apiClient
+      .get('matches')
+      .json()
+      .then((res) => {
+        const match = (res.items ?? []).find((m) => m.id === id);
+        if (match) {
+          setInfo({
+            name: `${match.listing_brand || ''} ${match.listing_model || ''}`.trim() || 'Chat',
+            seller: match.other_user_email ? match.other_user_email.split('@')[0] : '',
+          });
+        }
+      })
+      .catch(() => {});
+  }, [id, location.state]);
 
   const messagesEndRef = useRef(null);
 
@@ -33,17 +52,21 @@ export default function BuyerChat() {
       try {
         // El backend responde { items, count } con campos en snake_case
         const history = await apiClient.get(`matches/${id}/messages`).json();
-        setMessages(
-          (history.items ?? []).map((m) => ({
-            id: m.id,
-            text: m.body,
-            senderId: m.sender_id,
-            time: new Date(m.created_at).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-          }))
-        );
+        const fetched = (history.items ?? []).map((m) => ({
+          id: m.id,
+          text: m.body,
+          senderId: m.sender_id,
+          time: new Date(m.created_at).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        }));
+        // Conservar mensajes que llegaron por WS mientras cargaba el
+        // historial (merge por id, el historial primero).
+        setMessages((prev) => {
+          const seen = new Set(fetched.map((m) => m.id));
+          return [...fetched, ...prev.filter((m) => !seen.has(m.id))];
+        });
       } catch (error) {
         console.error('Error cargando historial', error);
       }
@@ -52,7 +75,7 @@ export default function BuyerChat() {
   }, [id]);
 
   // Hook de WebSockets
-  const { sendMessage } = useWebSocket(WS_URL, {
+  const { sendMessage, readyState } = useWebSocket(WS_URL, {
     onOpen: () => console.log('WebSocket conectado'),
     onMessage: (e) => {
       try {
@@ -78,13 +101,15 @@ export default function BuyerChat() {
     shouldReconnect: () => true,
   });
 
+  const isConnected = readyState === 1; // WebSocket.OPEN
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSend = (e) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !isConnected) return;
 
     // Enviar mensaje real a través del WebSocket
     const payload = JSON.stringify({
@@ -121,30 +146,32 @@ export default function BuyerChat() {
             <div className="chat-avatar-small">{info.name.substring(0, 1)}</div>
             <div className="chat-title-group">
               <h2 className="chat-name">{info.name}</h2>
-              <span className="chat-seller">Vendedor: {info.seller}</span>
+              <span className="chat-seller">
+                {isConnected ? (
+                  <>
+                    <span className="chat-status-dot online" aria-hidden="true" />
+                    {info.seller ? `Con ${info.seller}` : 'En línea'}
+                  </>
+                ) : (
+                  <>
+                    <span className="chat-status-dot" aria-hidden="true" />
+                    Conectando…
+                  </>
+                )}
+              </span>
             </div>
           </div>
 
-          <button className="chat-options-btn">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="1"></circle>
-              <circle cx="12" cy="5" r="1"></circle>
-              <circle cx="12" cy="19" r="1"></circle>
-            </svg>
-          </button>
+          <div style={{ width: '24px' }} aria-hidden="true" />
         </header>
 
         {/* Messages Area */}
         <main className="chat-messages-area">
+          {messages.length === 0 && (
+            <div className="chat-system-msg">
+              Hiciste match con este auto. ¡Rompe el hielo y pregunta por él! 👋
+            </div>
+          )}
           {messages.map((msg) => {
             if (msg.sender === 'system') {
               return (
@@ -176,11 +203,17 @@ export default function BuyerChat() {
           <input
             type="text"
             className="chat-input"
-            placeholder="Escribe un mensaje..."
+            placeholder={isConnected ? 'Escribe un mensaje...' : 'Conectando…'}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
+            autoFocus
           />
-          <button type="submit" className="chat-send-btn" disabled={!inputText.trim()}>
+          <button
+            type="submit"
+            className="chat-send-btn"
+            disabled={!inputText.trim() || !isConnected}
+            aria-label="Enviar mensaje"
+          >
             <svg
               width="20"
               height="20"

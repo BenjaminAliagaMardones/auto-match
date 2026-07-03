@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"os"
+	"strconv"
 )
 
 type Config struct {
@@ -28,7 +29,7 @@ func Load() (*Config, error) {
 		S3AccessKey: getenv("S3_ACCESS_KEY", "automatch"),
 		S3SecretKey: getenv("S3_SECRET_KEY", "automatch-secret"),
 		S3Bucket:    getenv("S3_BUCKET", "automatch"),
-		S3UseSSL:    os.Getenv("S3_USE_SSL") == "true",
+		S3UseSSL:    parseBool(getenv("S3_USE_SSL", "false")),
 		S3PublicURL: getenv("S3_PUBLIC_URL", "http://localhost:9000"),
 	}
 	if c.DatabaseURL == "" {
@@ -45,4 +46,11 @@ func getenv(key, def string) string {
 		return v
 	}
 	return def
+}
+
+// parseBool acepta las variantes usuales (true/TRUE/1/t...); un valor
+// inválido cuenta como false.
+func parseBool(v string) bool {
+	b, err := strconv.ParseBool(v)
+	return err == nil && b
 }
